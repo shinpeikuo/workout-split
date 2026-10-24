@@ -61,8 +61,11 @@ button{cursor:pointer;border:0;background:none}
 .session b{font-variant-numeric:tabular-nums;white-space:nowrap}
 
 .list{display:flex;flex-direction:column;gap:12px}
-.card{background:var(--card);border-radius:18px;padding:14px 14px 14px 4px;display:grid;grid-template-columns:28px 34px 1fr;column-gap:8px;border:1.5px solid transparent;transition:border-color .15s;position:relative}
-.handle{width:28px;height:40px;display:grid;place-items:center;color:var(--muted);touch-action:none;cursor:grab;border-radius:8px;margin-top:-2px}
+/* Drag handle sits above the exercise number in one narrow left column, leaving the rest of the card for the name and sets. */
+.card{background:var(--card);border-radius:18px;padding:12px 14px 14px 8px;display:grid;grid-template-columns:34px 1fr;grid-template-rows:auto 1fr;column-gap:10px;border:1.5px solid transparent;transition:border-color .15s;position:relative}
+.handle{grid-column:1;grid-row:1;width:34px;height:30px;display:grid;place-items:center;color:var(--muted);touch-action:none;cursor:grab;border-radius:8px}
+.card > .num{grid-column:1;grid-row:2;align-self:start;margin-top:2px}
+.card > .body{grid-column:2;grid-row:1 / span 2}
 .handle svg{width:18px;height:18px}
 .handle:active{cursor:grabbing;color:var(--accent)}
 .card.dragging{z-index:5;box-shadow:0 12px 30px rgba(0,0,0,.55);border-color:var(--accent);transition:none}
@@ -169,6 +172,25 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
 .detail .ex{background:var(--chip);border-radius:12px;padding:10px 12px}
 .detail .ex b{display:block;color:var(--accent);font-size:15px}
 .detail .ex span{color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* exercise picker */
+.exlist{background:var(--chip);border-radius:12px;max-height:290px;overflow:auto;margin-top:-6px}
+.exlist .grp{position:sticky;top:0;background:#20242d;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:7px 12px}
+.exlist .opt{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:11px 12px;text-align:left;font-size:15px;border-top:1px solid #30353f}
+.exlist .grp + .opt{border-top:0}
+.exlist .opt small{color:var(--muted);font-size:12px;white-space:nowrap}
+.exlist .opt .star{color:var(--accent);font-size:12px}
+.exlist .opt.new{color:var(--accent);font-weight:700;border-top:0}
+.exlist .none{padding:14px 12px;color:var(--muted);font-size:14px}
+.hint{font-size:13px;color:var(--muted);background:var(--chip);border-radius:12px;padding:10px 12px}
+.hint.prompt{color:#e9d9b8;background:#2b2210}
+.parts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.parts .check{background:var(--chip);border-radius:10px;padding:9px 10px;font-size:14px;text-transform:none;letter-spacing:0;font-weight:500;color:var(--fg)}
+.setrows{display:flex;flex-direction:column;gap:8px}
+.setrow{display:grid;grid-template-columns:30px 1fr 1fr;gap:8px;align-items:center}
+.setrow i{font-style:normal;font-size:12px;font-weight:700;color:var(--muted)}
+.setrow select{background:var(--chip);border:1px solid transparent;border-radius:10px;padding:10px;font-size:16px;width:100%;min-width:0}
+.setrow select.missing{border-color:#6a4a1a}
 .adhoc-pick{display:flex;flex-direction:column;gap:8px}
 .adhoc-pick button{display:flex;align-items:center;gap:12px;border:1.5px dashed var(--chip-hi);border-radius:14px;padding:12px 14px;text-align:left}
 .adhoc-pick button.resume{border-style:solid;border-color:var(--accent)}
@@ -223,6 +245,7 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
   const MAX_DAYS = 7, MAX_SETS = 10;
   const DOC_PATH = "programs/main", LOGS_PATH = "programs/main/logs";
   const LOCAL_KEY = "workout-split-v1", LOCAL_LOGS = "workout-split-logs-v1", LOCAL_ADHOC = "workout-split-adhoc-v1";
+  const LOCAL_EXERCISES = "workout-split-exercises-v1";
   const ICONS = {
     workout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/></svg>',
     cardio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg>',
@@ -289,6 +312,65 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
   // Ad hoc sessions don't move the Day 1 → 2 → 3 rotation, so they're skipped here.
   const lastWorkout = () => sortedLogs().find(l => l.type === "workout" && !l.adhoc);
 
+  /* ---------- exercise library ---------- */
+  // Starting list, grouped by body part. A trailing "*" marks the ★ exercises from the original list.
+  const CATALOG = {
+    "Chest": ["Barbell Bench Press","Incline Barbell Bench Press","Decline Barbell Bench Press","Flat DB Bench Press*","Incline DB Bench Press*","Decline DB Bench Press","Smith Machine Bench Press","Smith Machine Incline Press","Machine Chest Press","Incline Machine Press","DB Fly","Incline DB Fly","Cable Fly","Low-to-High Cable Fly","Pec Deck","Push-Up","Weighted Dip*","Bodyweight Dip*"],
+    "Back": ["Conventional Deadlift","Trap Bar Deadlift*","Machine Deadlift*","Rack Pull","Pull-Up","Chin-Up","Weighted Pull-Up","Assisted Pull-Up Machine","Lat Pulldown*","Wide-Grip Lat Pulldown*","Close-Grip (V-Bar) Pulldown","Single-Arm Cable Pulldown","Straight-Arm Cable Pulldown","Barbell Bent-Over Row","Pendlay Row","One-Arm DB Row","T-Bar Row*","Chest-Supported Row*","Seated Cable Row","Iso-Lateral Machine Row","Meadows Row","Seal Row","Inverted Row","DB Pullover","45° Back Extension"],
+    "Shoulders & Traps": ["Barbell Overhead Press","Seated DB Shoulder Press*","Standing DB Shoulder Press","Arnold Press*","Machine Shoulder Press","Smith Machine Shoulder Press","Landmine Press","Push Press","DB Lateral Raise*","Cable Lateral Raise*","Machine Lateral Raise","DB Front Raise","Plate Front Raise","Rear Delt Fly Machine*","Bent-Over DB Rear Delt Fly","Cable Rear Delt Fly","Cable Face Pull*","Upright Row","Barbell Shrug","DB Shrug","Machine Shrug*","Incline Y-Raise"],
+    "Biceps": ["Barbell Curl","EZ-Bar Curl","DB Curl","Incline DB Curl","Hammer Curl","Cable Biceps Curl*","Bayesian Cable Curl*","EZ-Bar Preacher Curl","Preacher Curl Machine*","Spider Curl","Concentration Curl","Reverse Curl","Drag Curl"],
+    "Triceps": ["Close-Grip Bench Press","EZ-Bar Skull Crusher","Rope Triceps Pushdown","Straight-Bar Pushdown","Overhead Triceps Extension*","Overhead Cable Triceps Extension","DB Kickback","JM Press","Bench Dip","Machine Triceps Extension","Diamond Push-Up"],
+    "Forearms & Grip": ["Farmer Carry*","Wrist Curl","Reverse Wrist Curl","Dead Hang","Suitcase Carry"],
+    "Quads": ["Back Squat","Front Squat","Smith Machine Squat*","Belt Squat*","Hack Squat","Pendulum Squat","Goblet Squat","Safety Bar Squat","Leg Press*","Leg Extension*","Bulgarian Split Squat*","Walking Lunge","Reverse Lunge","Step-Up","Sissy Squat","Split Squat"],
+    "Hamstrings & Glutes": ["Barbell Romanian Deadlift","DB Romanian Deadlift","Stiff-Leg Deadlift","Single-Leg RDL","Good Morning","Seated Leg Curl*","Lying Leg Curl*","Nordic Hamstring Curl","GHD Glute-Ham Raise*","Barbell Hip Thrust","Hip Thrust Machine*","Glute Bridge","Cable Pull-Through","Kettlebell Swing","Sumo Deadlift","Hip Abduction Machine","Hip Adduction Machine","Cable Glute Kickback","Reverse Hyperextension"],
+    "Calves": ["Standing Calf Raise","Seated Calf Raise","Leg Press Calf Raise","Single-Leg DB Calf Raise"],
+    "Core": ["Cable Crunch*","Hanging Knee Raise*","Hanging Leg Raise","Ab Wheel Rollout","Weighted Plank","Side Plank","Pallof Press","Cable Woodchop","Decline Sit-Up","Dead Bug","Machine Ab Crunch"],
+    "Full Body / Power": ["Power Clean","Hang Clean","Thruster","DB Snatch","Turkish Get-Up","Sled Push"]
+  };
+  const BODY_PARTS = Object.keys(CATALOG), OTHER = "Other";
+  let customEx = [];        // [{name, parts}] exercises this user typed in; saved on this phone
+
+  // Matching key so "Farmer Carries", "farmer carry" and "Flat Dumbbell Bench Press" / "Flat DB Bench Press" line up.
+  const exKey = s => String(s ?? "").toLowerCase().replace(/dumbbell/g, "db").replace(/[^a-z0-9]+/g, " ").trim().split(" ")
+    .map(w => w === "laying" ? "lying" : w.length > 3 && /ies$/.test(w) ? w.slice(0, -3) + "y" : w.length > 3 && /(ch|sh|x|ss)es$/.test(w) ? w.slice(0, -2) : w.length > 3 && /[^s]s$/.test(w) ? w.slice(0, -1) : w).join(" ");
+
+  function persistCustom() { try { localStorage.setItem(LOCAL_EXERCISES, JSON.stringify(customEx)); } catch {} }
+  function cleanCustom(list) {
+    return (Array.isArray(list) ? list : []).filter(e => e && e.name).map(e => ({
+      name: String(e.name).slice(0, 60), parts: (Array.isArray(e.parts) ? e.parts : []).filter(p => BODY_PARTS.includes(p))
+    }));
+  }
+  // Everything the dropdown offers: the starting list, the user's own exercises, and any names already in
+  // their program or logs (so older data still matches up). One entry per exercise.
+  function library() {
+    const map = new Map();
+    BODY_PARTS.forEach(part => CATALOG[part].forEach(raw => {
+      const name = raw.replace(/\*$/, "");
+      map.set(exKey(name), { name, parts: [part], star: raw.endsWith("*") });
+    }));
+    customEx.forEach(e => { const k = exKey(e.name); if (!map.has(k)) map.set(k, { name: e.name, parts: e.parts.length ? e.parts : [OTHER], custom: true }); });
+    const seen = [];
+    state.days.forEach(d => d.exercises.forEach(e => seen.push(e.name)));
+    if (adhoc) adhoc.exercises.forEach(e => seen.push(e.name));
+    logs.forEach(l => (l.done || []).forEach(e => seen.push(e.name)));
+    seen.forEach(n => { const k = exKey(n); if (n && k && !map.has(k)) map.set(k, { name: n, parts: [OTHER], custom: true }); });
+    return [...map.values()];
+  }
+  // The sets from the most recent logged workout that included this exercise; falls back to the program.
+  function lastSetsFor(name) {
+    const k = exKey(name);
+    for (const l of sortedLogs()) {
+      if (l.type !== "workout") continue;
+      const e = (l.done || []).find(d => exKey(d.name) === k);
+      if (e && e.sets?.length) return { sets: e.sets, date: l.date, from: "log" };
+    }
+    for (const d of state.days) {
+      const e = d.exercises.find(x => exKey(x.name) === k && x.sets.length);
+      if (e) return { sets: e.sets, from: "program", dayName: d.name };
+    }
+    return null;
+  }
+
   /* ---------- program persistence ---------- */
   function normalize(data) {
     const days = Array.isArray(data?.days) ? data.days.slice(0, MAX_DAYS) : [];
@@ -344,6 +426,7 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
     mode = "local";
     try { const raw = localStorage.getItem(LOCAL_KEY); if (raw) state = normalize(JSON.parse(raw)); } catch {}
     try { const raw = localStorage.getItem(LOCAL_LOGS); if (raw) logs = JSON.parse(raw) || []; } catch {}
+    try { const raw = localStorage.getItem(LOCAL_EXERCISES); if (raw) customEx = cleanCustom(JSON.parse(raw)); } catch {}
     // Keep an unfinished ad hoc workout only for the day it was started; what was completed is already in the logs.
     try { const raw = localStorage.getItem(LOCAL_ADHOC); const a = raw && JSON.parse(raw); if (a && a.date === todayStr()) adhoc = a; else persistAdhoc(); } catch {}
     setSync("Saved on this phone");
@@ -608,7 +691,112 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
     });
   }
 
+  // Add exercise: pick from the library (sorted by body part, then A–Z) or type a new one.
+  function addExSheet() {
+    const day = curDay(), lib = library();
+    let pick = null, sets = [], pair = false, parts = [];
+    openSheet(`
+      <h2>Add <em>exercise</em></h2>
+      <div class="field"><label for="f-ex">Exercise</label>
+        <input type="text" id="f-ex" placeholder="Search, or type a new exercise" maxlength="60" autocomplete="off" role="combobox" aria-controls="ex-list" aria-expanded="true"></div>
+      <div class="exlist" id="ex-list" role="listbox" aria-label="Exercises"></div>
+      <div id="ex-form" class="btns" hidden></div>
+      <div class="err" id="err"></div>
+      <div class="btns">
+        <button class="btn primary" id="b-save">Add exercise</button>
+        <button class="btn ghost" id="b-cancel">Cancel</button>
+      </div>`, root => {
+      const input = $("#f-ex", root), list = $("#ex-list", root), form = $("#ex-form", root), err = $("#err", root);
+
+      function showList() {
+        const q = exKey(input.value), raw = input.value.trim();
+        const hits = q ? lib.filter(e => exKey(e.name).includes(q)) : lib;
+        const exact = q && lib.some(e => exKey(e.name) === q);
+        let html = raw && !exact ? `<button class="opt new" data-new="1">+ Add “${esc(raw)}” as a new exercise</button>` : "";
+        [...BODY_PARTS, OTHER].forEach(part => {
+          const inPart = hits.filter(e => e.parts.includes(part)).sort((a, b) => a.name.localeCompare(b.name));
+          if (!inPart.length) return;
+          html += `<div class="grp">${esc(part === OTHER ? "My other exercises" : part)}</div>`
+            + inPart.map(e => `<button class="opt" role="option" data-key="${esc(exKey(e.name))}"><span>${esc(e.name)}${e.star ? ` <span class="star" aria-label="starred">★</span>` : ""}</span>${e.custom ? "<small>yours</small>" : ""}</button>`).join("");
+        });
+        if (!html) html = `<div class="none">No matches.</div>`;
+        list.innerHTML = html; list.hidden = false; list.scrollTop = 0;
+        input.setAttribute("aria-expanded", "true");
+      }
+
+      function choose(entry, isNew) {
+        const hist = isNew ? null : lastSetsFor(entry.name);
+        pick = { name: entry.name, isNew };
+        parts = [];
+        pair = !!hist?.sets.some(s => s.pair);
+        sets = hist ? hist.sets.slice(0, MAX_SETS).map(s => ({ r: s.r ?? null, w: s.w ?? null })) : [{ r: null, w: null }];
+        input.value = entry.name;
+        list.hidden = true; input.setAttribute("aria-expanded", "false");
+        err.textContent = "";
+        const note = isNew
+          ? `<div class="hint prompt">New exercise. Check the body parts it works, then choose your sets, reps and weight.</div>`
+          : hist?.from === "log" ? `<div class="hint">Filled in from your last ${esc(entry.name)} on ${esc(fmtDate(hist.date))}. Change anything you like.</div>`
+          : hist ? `<div class="hint">Filled in from ${esc(hist.dayName)} in your program. Change anything you like.</div>`
+          : `<div class="hint prompt">You haven't logged this one yet. Choose your sets, reps and weight.</div>`;
+        form.innerHTML = note
+          + (isNew ? `<div class="field"><span class="lbl">Body parts (pick all that apply)</span><div class="parts">${BODY_PARTS.map(p => `<label class="check"><input type="checkbox" data-part="${esc(p)}"> ${esc(p)}</label>`).join("")}</div></div>` : "")
+          + `<div class="field"><span class="lbl">Number of sets</span>
+               <div class="stepper"><button id="s-minus" aria-label="Fewer sets">−</button><output id="s-n">${sets.length}</output><button id="s-plus" aria-label="More sets">+</button></div></div>
+             <div class="field"><span class="lbl">Reps and weight</span><div class="setrows" id="rows"></div></div>
+             <label class="check"><input type="checkbox" id="f-pair" ${pair ? "checked" : ""}> Per hand (×2), e.g. carries</label>`;
+        form.hidden = false;
+        drawRows();
+        $("#s-minus", form).onclick = () => { if (sets.length > 1) { sets.pop(); drawRows(); } };
+        $("#s-plus", form).onclick = () => { if (sets.length < MAX_SETS) { sets.push({ ...sets[sets.length - 1] }); drawRows(); } };
+      }
+
+      function drawRows() {
+        $("#s-n", form).textContent = sets.length;
+        $("#rows", form).innerHTML = sets.map((s, i) => `<div class="setrow"><i>S${i + 1}</i>
+          <select data-i="${i}" data-f="r" aria-label="Set ${i + 1} reps">${repOpts(s.r).replace('<option value="">—</option>', '<option value="">Reps</option>')}</select>
+          <select data-i="${i}" data-f="w" aria-label="Set ${i + 1} weight">${weightOpts(s.w).replace('<option value="">—</option>', '<option value="">Weight</option>')}</select></div>`).join("");
+      }
+
+      input.addEventListener("input", () => { pick = null; form.hidden = true; form.innerHTML = ""; showList(); });
+      input.addEventListener("focus", () => { if (pick) input.select(); });
+      list.addEventListener("click", e => {
+        const b = e.target.closest(".opt"); if (!b) return;
+        if (b.dataset.new) choose({ name: input.value.trim().replace(/\s+/g, " ") }, true);
+        else choose(lib.find(x => exKey(x.name) === b.dataset.key), false);
+      });
+      form.addEventListener("change", e => {
+        const t = e.target;
+        if (t.dataset.part) parts = [...form.querySelectorAll("[data-part]:checked")].map(x => x.dataset.part);
+        else if (t.id === "f-pair") pair = t.checked;
+        else if (t.dataset.f) {
+          const v = t.value, i = +t.dataset.i;
+          sets[i][t.dataset.f] = v === "" ? null : t.dataset.f === "w" && v === "BW" ? "BW" : +v;
+          t.classList.remove("missing");
+        }
+      });
+      $("#b-save", root).onclick = () => {
+        if (!pick) {
+          const k = exKey(input.value), match = k && lib.find(x => exKey(x.name) === k);
+          if (match) { choose(match, false); return; }
+          return err.textContent = input.value.trim() ? "Pick an exercise from the list, or tap “Add as a new exercise”." : "Choose an exercise.";
+        }
+        if (pick.isNew && !parts.length) return err.textContent = "Check at least one body part.";
+        const missing = sets.findIndex(s => s.r == null && s.w == null);
+        if (missing >= 0) {
+          form.querySelectorAll(`[data-i="${missing}"]`).forEach(s => s.classList.add("missing"));
+          return err.textContent = `Set ${missing + 1} needs reps or weight.`;
+        }
+        day.exercises.push({ id: uid(), name: pick.name, sets: sets.map(s => ({ r: s.r, w: s.w, pair })) });
+        if (pick.isNew && !customEx.some(e => exKey(e.name) === exKey(pick.name))) { customEx.push({ name: pick.name, parts }); persistCustom(); }
+        commit(); closeSheet();
+      };
+      $("#b-cancel", root).onclick = closeSheet;
+      showList();
+    });
+  }
+
   function exSheet(ei) {
+    if (ei == null) return addExSheet();
     const day = curDay();
     const isNew = ei == null;
     const ex = isNew ? { id: uid(), name: "", sets: [0,1,2].map(() => ({ r: 10, w: null, pair: false })) } : day.exercises[ei];
@@ -671,6 +859,7 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
           state.days.push(day); view = state.days.length - 1;
         }
         commit(); closeSheet();
+        if (isNew && !day.exercises.length) setTimeout(() => exSheet(null), 240);   // empty new day: go straight to picking exercises
       };
       $("#b-cancel", root).onclick = closeSheet;
       if (!isNew) $("#b-del", root).onclick = () => confirmInto(root,
@@ -800,7 +989,7 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
   }
 
   function backupSheet() {
-    const data = JSON.stringify({ app: "workout-split", version: 1, exportedAt: new Date().toISOString(), days: state.days, logs });
+    const data = JSON.stringify({ app: "workout-split", version: 1, exportedAt: new Date().toISOString(), days: state.days, logs, exercises: customEx });
     openSheet(`
       <h2>Back up <em>&amp; restore</em></h2>
       <p style="margin:0;color:var(--muted);font-size:14px">Copy the backup and keep it somewhere safe, like a note or an email to yourself. To restore, paste a backup below. Restoring replaces everything on this phone.</p>
@@ -824,6 +1013,7 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
         if (!parsed || !Array.isArray(parsed.days)) { err.style.color = ""; return err.textContent = "That backup has no workout days in it."; }
         confirmInto(root, `Replace everything on this phone with this backup (${parsed.days.length} days, ${(parsed.logs || []).length} log entries)?`, "Restore", () => {
           state = normalize(parsed); logs = Array.isArray(parsed.logs) ? parsed.logs : [];
+          customEx = cleanCustom(parsed.exercises); persistCustom();   // older backups have no "exercises"; that's fine
           view = "home"; persistLocalLogs(); commit(); closeSheet();
         });
       };
