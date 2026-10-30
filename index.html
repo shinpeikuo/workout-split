@@ -440,7 +440,7 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
     const day = curDay(), ex = day.exercises[ei], isAdhoc = day === adhoc;
     const existing = sessionFor(day);
     const log = existing ? JSON.parse(JSON.stringify(existing)) : isAdhoc ? {
-      id: day.id, type: "workout", adhoc: true, date: day.date, ts: Date.now(),
+      id: day.id, type: "workout", adhoc: true, date: day.date, ts: Date.now(), ...(day.repeatOf ? { repeatOf: day.repeatOf } : {}),
       dayId: null, dayNum: null, dayName: day.name, total: day.exercises.length, done: []
     } : {
       id: sessionId(day), type: "workout", date: todayStr(), ts: Date.now(),
@@ -646,8 +646,8 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
   $("#scrim").addEventListener("click", closeSheet);
   document.addEventListener("keydown", e => { if (e.key === "Escape" && sheetOpen) closeSheet(); });
 
-  function confirmInto(root, msg, label, onYes) {
-    const box = $("#confirm", root);
+  function confirmInto(root, msg, label, onYes, boxSel = "#confirm") {
+    const box = $(boxSel, root);
     box.innerHTML = `<div class="confirm">${msg}<div class="inline"><button class="btn danger" id="c-yes">${label}</button><button class="btn" id="c-no">Keep</button></div></div>`;
     $("#c-yes", root).onclick = onYes;
     $("#c-no", root).onclick = () => { box.innerHTML = ""; };
@@ -901,6 +901,17 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
     adhoc = { id: `w_${date}_adhoc_${uid()}`, adhoc: true, name: "Ad Hoc", date, exercises: [] };
     persistAdhoc(); view = "adhoc";
   }
+  // Repeat a past workout: today's ad hoc session, pre-loaded with the exercises completed that day
+  // and the sets recorded then. Editable like any session; doesn't move the Day rotation.
+  function repeatWorkout(l) {
+    const date = todayStr();
+    adhoc = {
+      id: `w_${date}_adhoc_${uid()}`, adhoc: true, date, repeatOf: l.id,
+      name: (l.adhoc ? l.dayName : `${l.dayName} · Day ${dayNumFor(l)}`).slice(0, 30),
+      exercises: l.done.map(e => ({ id: uid(), name: e.name, sets: (e.sets || []).slice(0, MAX_SETS).map(s => ({ r: s.r ?? null, w: s.w ?? null, pair: !!s.pair })) }))
+    };
+    persistAdhoc(); view = "adhoc";
+  }
   function finishAdhoc() { adhoc = null; persistAdhoc(); view = "home"; render(); window.scrollTo({ top: 0 }); }
   function adhocSheet() {
     const log = sessionFor(adhoc);
@@ -979,10 +990,19 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
       <div class="btns">
         ${di >= 0 && l.date === todayStr() ? `<button class="btn primary" id="b-open">Continue Day ${di + 1}</button>` : ""}
         ${canResume ? `<button class="btn primary" id="b-open">Continue ad hoc workout</button>` : ""}
+        ${!canResume && l.done.length ? `<button class="btn primary" id="b-repeat">Repeat this workout</button><div id="confirm-rep"></div>` : ""}
+        ${di >= 0 && l.date !== todayStr() ? `<button class="btn" id="b-open">Open Day ${di + 1}</button>` : ""}
         <button class="btn danger" id="b-del">Delete this workout log</button><div id="confirm"></div>
         <button class="btn ghost" id="b-cancel">Close</button>
       </div>`, root => {
       const ob = $("#b-open", root); if (ob) ob.onclick = () => { view = canResume ? "adhoc" : di; closeSheet(); window.scrollTo({ top: 0 }); };
+      const rb = $("#b-repeat", root);
+      if (rb) rb.onclick = () => {
+        const go = () => { repeatWorkout(l); closeSheet(); window.scrollTo({ top: 0 }); };
+        if (!adhoc || !adhoc.exercises.length) return go();
+        const kept = sessionFor(adhoc)?.done.length || 0;
+        confirmInto(root, `Replace today's ad hoc workout (${esc(adhoc.name)})?${kept === 1 ? " The exercise you completed stays logged." : kept ? ` The ${kept} exercises you completed stay logged.` : ""}`, "Replace", go, "#confirm-rep");
+      };
       $("#b-del", root).onclick = () => confirmInto(root, "Delete this workout log? Your program is not affected.", "Delete", () => { removeLog(l.id); closeSheet(); });
       $("#b-cancel", root).onclick = closeSheet;
     });
