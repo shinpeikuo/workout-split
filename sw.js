@@ -1,6 +1,6 @@
 // Service worker: saves the app's files on the phone so it opens with no internet.
 // Bump CACHE whenever you change any file below, so phones pick up the new version.
-const CACHE = "workout-split-v11";
+const CACHE = "workout-split-v12";
 const FILES = [
   "./",
   "./index.html",

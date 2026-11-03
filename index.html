@@ -144,7 +144,9 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
 .sheet.on{transform:none}
 @media (prefers-reduced-motion:reduce){.sheet,.scrim,.card,.session .bar i{transition:none}}
 .sheet .inner{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
-.grab{width:40px;height:4px;border-radius:2px;background:var(--chip-hi);margin:0 auto 4px}
+.grab{align-self:stretch;height:32px;margin:-10px 0 -14px;position:relative;touch-action:none;cursor:grab}
+.grab::before{content:"";position:absolute;left:50%;top:10px;width:40px;height:4px;margin-left:-20px;border-radius:2px;background:var(--chip-hi)}
+.grab:active::before{background:var(--muted)}
 .sheet h2{margin:0;font-size:20px;font-weight:700}
 .sheet h2 em{font-style:normal;color:var(--accent)}
 .field{display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -911,6 +913,34 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
     render();
   }
   $("#scrim").addEventListener("click", closeSheet);
+  // Swipe the sheet down by its handle bar to close it. A short or slow pull springs back.
+  (() => {
+    const sheet = $("#sheet"), scrim = $("#scrim");
+    let drag = null;
+    const end = e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const { dy, v } = drag; drag = null;
+      sheet.style.transition = scrim.style.transition = "";
+      sheet.style.transform = scrim.style.opacity = "";
+      if (dy > Math.min(140, sheet.offsetHeight * 0.3) || (dy > 20 && v > 0.5)) closeSheet();
+    };
+    sheet.addEventListener("pointerdown", e => {
+      if (!e.target.closest(".grab") || !sheetOpen) return;
+      drag = { id: e.pointerId, y0: e.clientY, y: e.clientY, t: e.timeStamp, dy: 0, v: 0 };
+      e.target.setPointerCapture?.(e.pointerId);
+      sheet.style.transition = scrim.style.transition = "none";
+    });
+    sheet.addEventListener("pointermove", e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dt = Math.max(1, e.timeStamp - drag.t);
+      drag.v = (e.clientY - drag.y) / dt; drag.y = e.clientY; drag.t = e.timeStamp;
+      drag.dy = Math.max(0, e.clientY - drag.y0);
+      sheet.style.transform = `translateY(${drag.dy}px)`;
+      scrim.style.opacity = String(Math.max(0, 1 - drag.dy / sheet.offsetHeight));
+    });
+    sheet.addEventListener("pointerup", end);
+    sheet.addEventListener("pointercancel", e => { if (drag) drag.dy = 0; end(e); });
+  })();
   document.addEventListener("keydown", e => { if (e.key === "Escape" && sheetOpen) closeSheet(); });
 
   function confirmInto(root, msg, label, onYes, boxSel = "#confirm") {
