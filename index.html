@@ -111,7 +111,7 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
 /* dashboard */
 .btn-sm{background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:9px 16px;font-weight:700;font-size:14px;white-space:nowrap}
 .tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.tile{background:var(--card);border-radius:18px;padding:16px;display:flex;flex-direction:column;align-items:flex-start;gap:10px;text-align:left}
+.tile{background:var(--card);border-radius:18px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
 .tile .ic{width:38px;height:38px;border-radius:12px;display:grid;place-items:center}
 .tile .ic svg{width:20px;height:20px}
 .tile b{font-size:17px}
@@ -124,7 +124,6 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
 .week div{display:flex;flex-direction:column;gap:2px}
 .week b{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
 .week small{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.week .note{grid-column:1/-1;color:var(--muted);font-size:12px;border-top:1px solid var(--chip);padding-top:8px;margin-top:4px}
 .feed{display:flex;flex-direction:column;background:var(--card);border-radius:18px;overflow:hidden}
 .item{display:flex;align-items:center;gap:12px;padding:12px 14px;text-align:left;border-top:1px solid var(--chip)}
 .item:first-child{border-top:0}
@@ -703,10 +702,6 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
   function renderHome() {
     const ws = weekStart(), inWeek = sortedLogs().filter(l => parseDate(l.date) >= ws);
     const cnt = t => inWeek.filter(l => l.type === t).length;
-    const cardioMin = inWeek.filter(l => l.type === "cardio").reduce((n, l) => n + (+l.minutes || 0), 0);
-    const cardioMi = inWeek.filter(l => l.type === "cardio" && (l.unit || "mi") === "mi").reduce((n, l) => n + (+l.distance || 0), 0);
-    const saunaMin = inWeek.filter(l => l.type === "sauna").reduce((n, l) => n + (+l.minutes || 0), 0);
-    const notes = [cardioMin && `${fmtMin(cardioMin)} cardio`, cardioMi && `${+cardioMi.toFixed(2)} mi`, saunaMin && `${fmtMin(saunaMin)} sauna`].filter(Boolean);
     const recent = sortedLogs().slice(0, 15);
     return `
       ${installTip()}
@@ -725,7 +720,6 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
         <div><b>${cnt("cardio")}</b><small>Cardio</small></div>
         <div><b>${cnt("sauna")}</b><small>Sauna</small></div>
         <div><b>${cnt("misc")}</b><small>Misc</small></div>
-        ${notes.length ? `<div class="note">${notes.join(" · ")}</div>` : ""}
       </div>
       <div class="section-label">Recent</div>
       <div class="feed">
