@@ -7,9 +7,27 @@
 <title>Workout Split</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Workouts">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="Offline workout tracker. Save workouts, log your sets, and open workouts friends share with you.">
+<!-- Link preview card (iMessage, WhatsApp, Android Messages, etc.) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Workout Split">
+<meta property="og:title" content="Workout Split: a shared workout">
+<meta property="og:description" content="Tap to open this workout in Workout Split, a free offline workout tracker. No account needed.">
+<meta property="og:url" content="https://shinpeikuo.github.io/workout-split/">
+<meta property="og:image" content="https://shinpeikuo.github.io/workout-split/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Workout Split app icon: an orange dumbbell">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Workout Split: a shared workout">
+<meta name="twitter:description" content="Tap to open this workout in Workout Split, a free offline workout tracker. No account needed.">
+<meta name="twitter:image" content="https://shinpeikuo.github.io/workout-split/icons/og-image.png">
 <style>
 @font-face{font-family:"Poppins";font-style:normal;font-weight:400;font-display:swap;src:url(fonts/poppins-latin-400-normal.woff2) format("woff2")}
 @font-face{font-family:"Poppins";font-style:normal;font-weight:500;font-display:swap;src:url(fonts/poppins-latin-500-normal.woff2) format("woff2")}
@@ -17,7 +35,7 @@
 @font-face{font-family:"Poppins";font-style:normal;font-weight:700;font-display:swap;src:url(fonts/poppins-latin-700-normal.woff2) format("woff2")}
 @font-face{font-family:"Poppins";font-style:normal;font-weight:800;font-display:swap;src:url(fonts/poppins-latin-800-normal.woff2) format("woff2")}
 
-/* Layout: one phone column — tab row (Home + Day 1–7), then either the dashboard or a day's exercise cards; all edits in bottom sheets. Single dark look by design, matching the program cards. */
+/* Layout: one phone column: header (Home, Saved Workouts dropdown, Settings), then Home, Settings or a workout screen; all edits in bottom sheets. Single dark look by design, matching the program cards. */
 :root{
   --bg:#0d1015; --card:#1b1e26; --chip:#2a2e38; --chip-hi:#343946;
   --fg:#f4f5f7; --muted:#8b909c; --accent:#ff7a2b; --accent-ink:#1a0d04; --danger:#ff5a5a;
@@ -36,12 +54,6 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;border:0;background:none}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-.tabs{display:flex;gap:6px;padding:4px 0 6px;width:100%}
-.tabs::-webkit-scrollbar{display:none}
-.tab{flex:1 1 0;min-width:0;padding:8px 2px;border-radius:999px;background:var(--card);color:var(--muted);font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:clip;text-align:center}
-.tabs.tight .tab{font-size:13px}
-.tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
-.tab.add{flex:0 0 38px;color:var(--accent);border:1.5px dashed var(--chip-hi);background:transparent;font-size:20px;line-height:1;padding:6px 0}
 
 .head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:6px}
 .head h1{margin:0;font-size:clamp(30px,9vw,44px);line-height:1.05;font-weight:800;letter-spacing:-.02em;text-wrap:balance;text-align:left}
@@ -228,24 +240,109 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
 .daylog .ex{font-size:13px;line-height:1.45}
 .daylog .ex b{color:var(--accent);font-weight:600}
 .daylog .ex span{color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* header: Home · Saved Workouts dropdown · Settings */
+.topbar{display:flex;gap:8px;align-items:center;position:relative;padding:4px 0 6px;width:100%}
+.tb{min-height:44px;padding:0 16px;border-radius:999px;background:var(--card);color:var(--muted);font-weight:600;font-size:15px;white-space:nowrap}
+.tb[aria-current="true"]{background:var(--accent);color:var(--accent-ink)}
+.dd{flex:1;min-width:0}
+.tb.dd-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tb.dd-btn span{overflow:hidden;text-overflow:ellipsis}
+.tb.dd-btn svg{flex:0 0 auto;transition:transform .15s}
+.tb.dd-btn[aria-expanded="true"] svg{transform:rotate(180deg)}
+.tb.icon{width:44px;padding:0;display:grid;place-items:center;flex:0 0 auto}
+.tb.icon svg{width:20px;height:20px}
+.dd-menu{position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:15;background:var(--card);border:1px solid var(--chip-hi);border-radius:16px;box-shadow:0 14px 34px rgba(0,0,0,.6);max-height:min(460px,65vh);overflow:auto;-webkit-overflow-scrolling:touch;padding:6px}
+.dd-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700;padding:8px 12px 4px}
+.dd-item{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:52px;padding:8px 12px;border-radius:12px;text-align:left}
+.dd-item span:first-child{min-width:0}
+.dd-item b{display:block;font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dd-item small{color:var(--muted);font-size:12px}
+.dd-item.cur{background:var(--chip)}
+.dd-item.new{color:var(--accent);font-weight:700;font-size:16px;min-height:48px}
+.heart{color:var(--sauna);font-size:18px;line-height:1;flex:0 0 auto}
+.daypick .heart{font-size:15px;margin-left:4px}
+.dd-sep{height:1px;background:var(--chip);margin:4px 8px}
+.dd-empty{padding:12px;color:var(--muted);font-size:14px}
+
+/* saved workout detail */
+.actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.act{min-height:44px;border-radius:12px;background:var(--card);font-weight:600;font-size:14px;color:var(--fg);padding:6px 4px}
+.act.on{color:var(--sauna)}
+.act.danger{color:var(--danger)}
+.btn.start{padding:16px;font-size:17px}
+.btn.kept{background:var(--ok-bg);color:var(--ok)}
+
+/* settings */
+.panel{background:var(--card);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel.inset{background:var(--chip)}
+.pnote{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+.pnote b{color:var(--fg)}
+.kv{display:flex;justify-content:space-between;gap:12px;font-size:15px}
+.kv span{color:var(--muted)}
+.removed{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.removed b{display:block;font-size:15px}
+.removed small{color:var(--muted);font-size:12px}
+.filebtn{position:relative;text-align:center;overflow:hidden}
+.filebtn input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.mono{font-family:ui-monospace,Menlo,monospace}
+
+/* iPhone install tip */
+.tip{display:flex;gap:10px;align-items:flex-start;background:#132433;border:1px solid #1f4058;border-radius:14px;padding:12px 12px 12px 14px;font-size:14px;line-height:1.45;color:#cfe3f2}
+.tip b{display:block;color:var(--fg);margin-bottom:2px}
+.tip b.inl{display:inline}
+.tip .share-ic{display:inline-block;vertical-align:-2px;color:var(--cardio)}
+.tip-x{flex:0 0 auto;width:44px;height:44px;margin:-10px -8px -10px 0;color:var(--muted);font-size:16px}
+
+/* toast and update banner, clear of the notch and home indicator */
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;z-index:40;background:#f4f5f7;color:#0d1015;padding:12px 18px;border-radius:14px;font-weight:600;font-size:15px;max-width:calc(100% - 32px);box-shadow:0 8px 24px rgba(0,0,0,.4);transition:opacity .2s,transform .2s;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.updbar{position:fixed;left:max(12px,env(safe-area-inset-left,0px));right:max(12px,env(safe-area-inset-right,0px));top:calc(8px + env(safe-area-inset-top,0px));z-index:45;display:flex;align-items:center;gap:8px;background:var(--accent);color:var(--accent-ink);border-radius:14px;padding:6px 6px 6px 14px;font-weight:600;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.45);max-width:560px;margin:0 auto}
+.updbar span{flex:1}
+.updbar button{min-height:40px;border-radius:10px;font-weight:700;padding:0 12px}
+#upd-go{background:var(--accent-ink);color:var(--accent)}
+#upd-x{width:40px;padding:0}
+
+/* iPhone: 16px+ text in every field so tapping doesn't zoom; 44px tap targets; visible press feedback */
+input,select,textarea{font-size:16px}
+.field input:not([type=checkbox]),.field select,.field textarea{font-size:17px}
+textarea.mono{font-size:16px}
+.complete{min-height:44px;padding:8px 14px}
+.chip{min-height:40px;align-items:center}
+.handle{height:40px}
+.cal-head button{width:44px;height:44px}
+.btn-sm{min-height:40px}
+button:not(:disabled):active,.filebtn:active{opacity:.75}
+.btn:not(:disabled):active,.tile:active,.act:active,.dd-item:active,.item:active,.cal-day.has:active{transform:scale(.98)}
+.btn,.tile,.act,.dd-item,.item,.cal-day{transition:transform .08s,opacity .08s}
+.sheet{padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
 </style>
 </head>
 <body>
 
 <div class="wrap" id="app">
-  <nav class="tabs" id="tabs" role="tablist" aria-label="Sections"></nav>
+  <nav class="topbar" id="tabs" aria-label="Sections"></nav>
   <div id="main"></div>
 </div>
 
 <div class="scrim" id="scrim" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<div class="updbar" id="updbar" role="status" hidden><span>A new version of Workout Split is ready.</span><button id="upd-go">Update now</button><button id="upd-x" aria-label="Later">✕</button></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true" hidden><div class="inner" id="sheetInner"></div></div>
 
 <script>
 (() => {
-  const MAX_DAYS = 7, MAX_SETS = 10;
-  const DOC_PATH = "programs/main", LOGS_PATH = "programs/main/logs";
+  const MAX_SETS = 10, MAX_SAVED = 200;
+  /* ---------- storage slots (see CLAUDE.md: never lose user data) ----------
+     Data version 1 (no meta slot): header "Day" workouts in LOCAL_KEY.
+     Data version 2: Saved Workouts in LOCAL_SAVED. LOCAL_KEY is kept untouched so older app copies still work. */
+  const DATA_VERSION = 2;
   const LOCAL_KEY = "workout-split-v1", LOCAL_LOGS = "workout-split-logs-v1", LOCAL_ADHOC = "workout-split-adhoc-v1";
   const LOCAL_EXERCISES = "workout-split-exercises-v1";
+  const LOCAL_META = "workout-split-meta", LOCAL_SAVED = "workout-split-saved-v2", LOCAL_FAVS = "workout-split-favorites-v1";
+  const LOCAL_REMOVED = "workout-split-removed-v1", LOCAL_KEEP = "workout-split-adhoc-keep-v1", LOCAL_SETTINGS = "workout-split-settings-v1";
+  const LOCAL_PRE_V2 = "workout-split-backup-before-v2", LOCAL_PRE_RESTORE = "workout-split-backup-before-restore";
+  const ALL_DATA_KEYS = [LOCAL_KEY, LOCAL_LOGS, LOCAL_ADHOC, LOCAL_EXERCISES, LOCAL_META, LOCAL_SAVED, LOCAL_FAVS, LOCAL_REMOVED, LOCAL_KEEP, LOCAL_SETTINGS];
   const ICONS = {
     workout:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12"/></svg>',
     cardio:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg>',
@@ -256,16 +353,22 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
   };
   const CARDIO_TYPES = ["Run","Walk","Incline walk","Bike","Row","Elliptical","Stair climber","Swim","Hike","Other"];
 
-  let state = { days: [] };
-  let logs = [];            // [{id, type, date, ts, ...}]
-  let view = "home";        // "home" | day index (number) | "adhoc"
-  let adhoc = null;         // today's one-off workout {id, name, date, exercises}; never added to state.days
+  let state = { days: [] }; // state.days = Saved Workouts [{id, name, exercises}] (named "days" from version 1)
+  let logs = [];            // History: [{id, type, date, ts, ...}]
+  let favs = [];            // ids of Favorite saved workouts
+  let removed = [];         // Recently removed saved workouts [{workout, removedAt, wasFavorite}]; restorable
+  let settings = {};        // {name, lastExport, tipDismissed}
+  let keepId = null;        // id of the ad hoc draft marked "Keep active"
+  let view = "home";        // "home" | "settings" | "detail" | "adhoc" | saved workout index (number) = workout in progress
+  let detailIdx = null;     // saved workout shown when view === "detail"
+  let adhoc = null;         // in-progress ad hoc workout {id, name, date, exercises}; never added to Saved Workouts automatically
   let calMonth = null;      // "YYYY-MM" shown in the calendar; null = this month
-  let db = null, docRef = null, logsRef = null, mode = "loading";
-  let saveTimer = null, pending = false, syncMsg = "Loading…";
+  let ddOpen = false;       // Saved Workouts dropdown open
+  let mode = "loading", syncMsg = "Loading…";
 
   const uid = () => Math.random().toString(36).slice(2, 10);
-  const curDay = () => view === "adhoc" ? adhoc : state.days[view];
+  const curDay = () => view === "adhoc" ? adhoc : view === "detail" ? state.days[detailIdx] : typeof view === "number" ? state.days[view] : undefined;
+  const isFav = w => !!w && favs.includes(w.id);
   const $ = (s, el = document) => el.querySelector(s);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 
@@ -292,8 +395,10 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
   const totalSets = d => d.exercises.reduce((n, e) => n + e.sets.length, 0);
   const fmtMin = m => m >= 60 ? `${Math.floor(m/60)} hr${m%60 ? " " + (m%60) + " min" : ""}` : `${m} min`;
   const adhocLabel = l => l.dayName && l.dayName !== "Ad Hoc" ? `${l.dayName} · Ad Hoc` : "Ad Hoc workout";
+  // Workout name as recorded in the log. Version 1 logs carry a Day number; newer ones store the saved workout's name.
+  const workoutName = l => l.adhoc ? l.dayName : l.dayNum ? `${l.dayName} · Day ${l.dayNum}` : (l.dayName || "Workout");
   function logTitle(l) {
-    if (l.type === "workout") return l.adhoc ? adhocLabel(l) : `Day ${dayNumFor(l)} · ${l.dayName}`;
+    if (l.type === "workout") return l.adhoc ? adhocLabel(l) : workoutName(l);
     if (l.type === "cardio") return l.activity || "Cardio";
     if (l.type === "sauna") return "Sauna";
     return l.what || "Misc";
@@ -307,10 +412,23 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
     if (l.note) parts.push(l.note);
     return parts.join(" · ") || (l.type === "cardio" ? "Cardio" : l.type === "sauna" ? "Sauna" : "Misc");
   }
-  function dayNumFor(l) { const i = state.days.findIndex(d => d.id === l.dayId); return i >= 0 ? i + 1 : l.dayNum; }
   const sortedLogs = () => logs.slice().sort((a, b) => b.date.localeCompare(a.date) || (b.ts || 0) - (a.ts || 0));
-  // Ad hoc sessions don't move the Day 1 → 2 → 3 rotation, so they're skipped here.
+  // Ad hoc sessions don't move the rotation, so they're skipped here.
   const lastWorkout = () => sortedLogs().find(l => l.type === "workout" && !l.adhoc);
+  // Rotation cycles through Favorites in their saved order.
+  const favWorkouts = () => state.days.filter(isFav);
+  function nextInRotation() {
+    const list = favWorkouts(); if (!list.length) return null;
+    const last = lastWorkout(), i = last ? list.findIndex(w => w.id === last.dayId) : -1;
+    return list[(i + 1) % list.length];
+  }
+  // Dropdown order: Favorites first (in saved order), then everything else A–Z.
+  function savedOrder() {
+    const rest = state.days.filter(w => !isFav(w)).sort((a, b) => a.name.localeCompare(b.name));
+    return [...favWorkouts(), ...rest];
+  }
+  const nameTaken = (name, exceptId) => state.days.some(w => w.id !== exceptId && w.name.trim().toLowerCase() === name.trim().toLowerCase());
+  function uniqueName(base, taken = n => nameTaken(n)) { base = base.trim().slice(0, 40) || "Workout"; let n = base, i = 2; while (taken(n)) n = `${base} (${i++})`; return n; }
 
   /* ---------- exercise library ---------- */
   // Starting list, grouped by body part. A trailing "*" marks the ★ exercises from the original list.
@@ -371,128 +489,225 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
     return null;
   }
 
-  /* ---------- program persistence ---------- */
-  function normalize(data) {
-    const days = Array.isArray(data?.days) ? data.days.slice(0, MAX_DAYS) : [];
-    return { days: days.map(d => ({
-      id: d.id || uid(), name: String(d.name ?? "Workout"),
-      exercises: (Array.isArray(d.exercises) ? d.exercises : []).map(e => ({
-        id: e.id || uid(), name: String(e.name ?? "Exercise"),
-        sets: (Array.isArray(e.sets) ? e.sets : []).slice(0, MAX_SETS).map(s => ({ r: s.r ?? null, w: s.w ?? null, pair: !!s.pair }))
-      }))
-    })) };
+  /* ---------- storage: read, write, migrate ---------- */
+  function readJSON(key) { try { const raw = localStorage.getItem(key); return raw == null ? null : JSON.parse(raw); } catch { return undefined; } }
+  let storageWarned = false;
+  function writeRaw(key, text) {
+    try { localStorage.setItem(key, text); return true; }
+    catch { if (!storageWarned) { storageWarned = true; toast("Couldn't save: phone storage is full. Export your data in Settings."); } return false; }
   }
-  function commit() { render(); pending = true; clearTimeout(saveTimer); saveTimer = setTimeout(save, 500); }
-  async function save() {
-    const payload = JSON.parse(JSON.stringify({ days: state.days, updatedAt: Date.now() }));
-    if (mode === "cloud") {
-      setSync("Saving…");
-      try { await docRef.set(payload); setSync("Synced"); }
-      catch (e) { setSync(e?.code === "invalid_argument" ? "Read-only — changes not saved" : "Couldn't save — check connection"); }
-      pending = false;
-    } else {
-      try { localStorage.setItem(LOCAL_KEY, JSON.stringify(payload)); } catch {}
-      persistAdhoc();
-      pending = false; setSync("Saved on this phone");
+  const writeJSON = (key, val) => writeRaw(key, JSON.stringify(val));
+
+  const cleanSet = s => ({ r: s?.r ?? null, w: s?.w ?? null, pair: !!s?.pair });
+  function normalizeWorkout(w) {
+    return {
+      id: String(w?.id || uid()), name: String(w?.name ?? "Workout").slice(0, 60),
+      exercises: (Array.isArray(w?.exercises) ? w.exercises : []).map(e => ({
+        id: String(e?.id || uid()), name: String(e?.name ?? "Exercise").slice(0, 60),
+        sets: (Array.isArray(e?.sets) ? e.sets : []).slice(0, MAX_SETS).map(cleanSet)
+      })),
+      ...(w?.savedAt ? { savedAt: w.savedAt } : {})
+    };
+  }
+  const normalizeWorkouts = list => (Array.isArray(list) ? list : []).slice(0, MAX_SAVED).map(normalizeWorkout);
+
+  // Version 1 → 2: each header "Day" becomes a Saved Workout with the same id (so History still links to it),
+  // named "<name> · Day N" so the three "Full Body" days stay distinguishable.
+  function v1DaysToSaved(days) {
+    const out = [];
+    (Array.isArray(days) ? days : []).forEach((d, i) => {
+      const w = normalizeWorkout(d);
+      w.name = uniqueName(`${w.name} · Day ${i + 1}`, n => out.some(x => x.name.toLowerCase() === n.toLowerCase()));
+      out.push(w);
+    });
+    return out;
+  }
+  // Add incoming workouts whose ids aren't already present (or removed). Never replaces anything.
+  function addMissing(existing, incoming) {
+    const have = new Set([...existing.map(w => w.id), ...removed.map(r => r.workout?.id)]);
+    return [...existing, ...incoming.filter(w => !have.has(w.id))];
+  }
+
+  // Runs once per data version. Snapshots the original data first, writes the upgraded copy,
+  // and only then records the new version. Safe to run again if interrupted.
+  function migrate() {
+    const meta = readJSON(LOCAL_META);
+    const version = meta?.dataVersion || 1;
+    if (version >= DATA_VERSION) return true;
+    if (localStorage.getItem(LOCAL_PRE_V2) == null) {
+      const items = {};
+      [LOCAL_KEY, LOCAL_LOGS, LOCAL_ADHOC, LOCAL_EXERCISES].forEach(k => { const v = localStorage.getItem(k); if (v != null) items[k] = v; });
+      if (!writeJSON(LOCAL_PRE_V2, { takenAt: new Date().toISOString(), fromVersion: version, items })) return false;
     }
+    const v1 = readJSON(LOCAL_KEY);
+    const fromV1 = v1DaysToSaved(v1?.days);
+    const saved = readJSON(LOCAL_SAVED);
+    const workouts = addMissing(normalizeWorkouts(saved?.workouts), fromV1);
+    const favsNow = Array.isArray(readJSON(LOCAL_FAVS)) ? readJSON(LOCAL_FAVS) : [];
+    const favsNext = [...new Set([...favsNow, ...fromV1.map(w => w.id)])];   // migrated workouts start as Favorites
+    if (!writeJSON(LOCAL_SAVED, { dataVersion: DATA_VERSION, workouts, updatedAt: Date.now() })) return false;
+    if (!writeJSON(LOCAL_FAVS, favsNext)) return false;
+    return writeJSON(LOCAL_META, { dataVersion: DATA_VERSION, migratedAt: new Date().toISOString(), fromVersion: version, v1SeenAt: v1?.updatedAt || 0 });
   }
+
+  /* ---------- saving: every change is written immediately ---------- */
+  // Writes the saved workouts and the ad hoc draft. It never clears the draft slot: only Finish, Delete
+  // and the daily expiry do that (persistAdhoc), so a stale copy of the page can't wipe a draft.
+  function save() {
+    writeJSON(LOCAL_SAVED, { dataVersion: DATA_VERSION, workouts: state.days, updatedAt: Date.now() });
+    if (adhoc) writeJSON(LOCAL_ADHOC, adhoc);
+    setSync("Saved on this phone");
+  }
+  function commit() { save(); render(); }
   function persistAdhoc() {
-    try { adhoc ? localStorage.setItem(LOCAL_ADHOC, JSON.stringify(adhoc)) : localStorage.removeItem(LOCAL_ADHOC); } catch {}
+    if (adhoc) writeJSON(LOCAL_ADHOC, adhoc);
+    else try { localStorage.removeItem(LOCAL_ADHOC); } catch {}
+    if (keepId && (!adhoc || adhoc.id !== keepId)) keepId = null;
+    if (keepId) writeJSON(LOCAL_KEEP, keepId); else try { localStorage.removeItem(LOCAL_KEEP); } catch {}
   }
+  const persistFavs = () => writeJSON(LOCAL_FAVS, favs);
+  const persistRemoved = () => writeJSON(LOCAL_REMOVED, removed);
+  const persistSettings = () => writeJSON(LOCAL_SETTINGS, settings);
   function setSync(t) { syncMsg = t; document.querySelectorAll(".sync").forEach(el => el.textContent = t); }
 
-  /* ---------- log persistence (one write at a time per doc) ---------- */
-  const queues = {};
-  function persistLocalLogs() { try { localStorage.setItem(LOCAL_LOGS, JSON.stringify(logs)); } catch {} }
+  /* ---------- History persistence ---------- */
+  function persistLocalLogs() { writeJSON(LOCAL_LOGS, logs); }
   function putLog(log) {
     const i = logs.findIndex(l => l.id === log.id);
     if (i >= 0) logs[i] = log; else logs.push(log);
-    render();
-    if (mode !== "cloud") return persistLocalLogs();
-    const { id, ...data } = log;
-    const clean = JSON.parse(JSON.stringify(data));
-    queues[id] = (queues[id] || Promise.resolve()).then(() => logsRef.doc(id).set(clean))
-      .then(() => setSync("Synced")).catch(() => setSync("Couldn't save log — check connection"));
+    persistLocalLogs(); render();
   }
-  function removeLog(id) {
-    logs = logs.filter(l => l.id !== id);
-    render();
-    if (mode !== "cloud") return persistLocalLogs();
-    queues[id] = (queues[id] || Promise.resolve()).then(() => logsRef.doc(id).delete())
-      .then(() => setSync("Synced")).catch(() => setSync("Couldn't delete — check connection"));
+  function removeLog(id) { logs = logs.filter(l => l.id !== id); persistLocalLogs(); render(); }
+
+  function loadAll() {
+    const r = readJSON(LOCAL_REMOVED); removed = Array.isArray(r) ? r.filter(x => x && x.workout) : [];
+    const ok = migrate();
+    const saved = readJSON(LOCAL_SAVED);
+    if (ok && saved) state = { days: normalizeWorkouts(saved.workouts) };
+    else state = { days: v1DaysToSaved(readJSON(LOCAL_KEY)?.days) };   // migration couldn't write: run on an in-memory copy
+    // An older cached copy of the app may still have added header Days after migrating: bring new ones over too.
+    const meta = readJSON(LOCAL_META), v1 = readJSON(LOCAL_KEY);
+    if (ok && meta && v1?.updatedAt > (meta.v1SeenAt || 0)) {
+      const fresh = v1DaysToSaved(v1.days).filter(w => !state.days.some(x => x.id === w.id));
+      if (fresh.length) { fresh.forEach(w => w.name = uniqueName(w.name)); state.days = addMissing(state.days, fresh); writeJSON(LOCAL_SAVED, { dataVersion: DATA_VERSION, workouts: state.days, updatedAt: Date.now() }); }
+      writeJSON(LOCAL_META, { ...meta, v1SeenAt: v1.updatedAt });
+    }
+    const l = readJSON(LOCAL_LOGS); logs = Array.isArray(l) ? l : [];
+    const f = readJSON(LOCAL_FAVS); favs = Array.isArray(f) ? f.filter(id => typeof id === "string") : [];
+    const s = readJSON(LOCAL_SETTINGS); settings = s && typeof s === "object" ? s : {};
+    const c = readJSON(LOCAL_EXERCISES); customEx = cleanCustom(c);
+    // Ad hoc drafts from an earlier day expire (owner's choice, see CLAUDE.md) unless marked "Keep active".
+    const a = readJSON(LOCAL_ADHOC), k = readJSON(LOCAL_KEEP);
+    keepId = typeof k === "string" ? k : null;
+    if (a && a.id && (a.date === todayStr() || a.id === keepId)) adhoc = a;
+    else { adhoc = null; if (a !== null) try { localStorage.removeItem(LOCAL_ADHOC); } catch {} }
+    if (keepId && (!adhoc || adhoc.id !== keepId)) { keepId = null; try { localStorage.removeItem(LOCAL_KEEP); } catch {} }
   }
 
   function boot() {
     mode = "local";
-    try { const raw = localStorage.getItem(LOCAL_KEY); if (raw) state = normalize(JSON.parse(raw)); } catch {}
-    try { const raw = localStorage.getItem(LOCAL_LOGS); if (raw) logs = JSON.parse(raw) || []; } catch {}
-    try { const raw = localStorage.getItem(LOCAL_EXERCISES); if (raw) customEx = cleanCustom(JSON.parse(raw)); } catch {}
-    // Keep an unfinished ad hoc workout only for the day it was started; what was completed is already in the logs.
-    try { const raw = localStorage.getItem(LOCAL_ADHOC); const a = raw && JSON.parse(raw); if (a && a.date === todayStr()) adhoc = a; else persistAdhoc(); } catch {}
+    loadAll();
+    try { navigator.storage?.persist?.(); } catch {}
     setSync("Saved on this phone");
     render();
+    handleShareLink();
   }
 
   /* ---------- workout session (today) ---------- */
   const sessionId = day => day === adhoc ? day.id : `w_${todayStr()}_${day.id}`;
   const sessionFor = day => logs.find(l => l.id === sessionId(day));
   function toggleComplete(ei) {
-    const day = curDay(), ex = day.exercises[ei], isAdhoc = day === adhoc;
-    const existing = sessionFor(day);
+    const day = curDay(), isAdhoc = day === adhoc;
+    // A kept-active ad hoc workout resumed on a later day logs under that day, not the day it was built.
+    if (isAdhoc && adhoc.date !== todayStr() && !sessionFor(adhoc)) {
+      const wasKept = keepId === adhoc.id;
+      adhoc.date = todayStr(); adhoc.id = `w_${adhoc.date}_adhoc_${uid()}`;
+      if (wasKept) keepId = adhoc.id;
+      persistAdhoc();
+    }
+    const ex = day.exercises[ei], existing = sessionFor(day);
     const log = existing ? JSON.parse(JSON.stringify(existing)) : isAdhoc ? {
       id: day.id, type: "workout", adhoc: true, date: day.date, ts: Date.now(), ...(day.repeatOf ? { repeatOf: day.repeatOf } : {}),
       dayId: null, dayNum: null, dayName: day.name, total: day.exercises.length, done: []
     } : {
       id: sessionId(day), type: "workout", date: todayStr(), ts: Date.now(),
-      dayId: day.id, dayNum: view + 1, dayName: day.name, total: day.exercises.length, done: []
+      dayId: day.id, dayNum: null, dayName: day.name, total: day.exercises.length, done: []
     };
     const i = log.done.findIndex(d => d.exId === ex.id);
     if (i >= 0) log.done.splice(i, 1);
     else log.done.push({ exId: ex.id, name: ex.name, sets: JSON.parse(JSON.stringify(ex.sets)) });
-    log.total = day.exercises.length; log.dayName = day.name; log.updatedTs = Date.now();
-    if (!isAdhoc) log.dayNum = view + 1;
+    log.total = day.exercises.length; log.updatedTs = Date.now();
+    if (isAdhoc || !log.dayNum) log.dayName = day.name;   // keep version-1 logs' original Day label
     if (!log.done.length) removeLog(log.id); else putLog(log);
   }
 
   /* ---------- render ---------- */
   let dragging = null;
+  const GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
   function render() {
     if (dragging) return;
-    const tabs = $("#tabs");
-    const tight = state.days.length > 4;   // short labels so up to 7 days + Home fit on one row
-    tabs.classList.toggle("tight", tight);
-    tabs.innerHTML = `<button class="tab" role="tab" aria-selected="${view === "home"}" data-view="home" aria-label="Home">${tight ? '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" style="vertical-align:-3px"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg>' : "Home"}</button>`
-      + state.days.map((d, i) => `<button class="tab" role="tab" aria-selected="${view === i}" data-view="${i}" aria-label="Day ${i + 1}">${tight ? "D" + (i + 1) : "Day " + (i + 1)}</button>`).join("")
-      + (state.days.length < MAX_DAYS && mode !== "loading" ? `<button class="tab add" data-act="add-day" aria-label="Add day">+</button>` : "");
     const main = $("#main");
-    if (mode === "loading") { main.innerHTML = `<div class="empty-state"><strong>Loading your program…</strong></div>`; return; }
+    if (mode === "loading") { main.innerHTML = `<div class="empty-state"><strong>Loading…</strong></div>`; return; }
     if (view === "adhoc" && !adhoc) view = "home";
-    main.innerHTML = view === "home" ? renderHome() : renderDay(curDay());
+    if (view === "detail" && !state.days[detailIdx]) view = "home";
+    if (typeof view === "number" && !state.days[view]) view = "home";
+    renderTopbar();
+    main.innerHTML = view === "home" ? renderHome() : view === "settings" ? renderSettings()
+      : renderDay(curDay(), view === "detail" ? "detail" : view === "adhoc" ? "adhoc" : "session");
   }
 
-  function offlineNote() {
-    return "";
+  function renderTopbar() {
+    const cur = curDay(), onSaved = (view === "detail" || typeof view === "number") && cur;
+    const items = savedOrder();
+    $("#tabs").innerHTML = `
+      <button class="tb" data-view="home" aria-current="${view === "home"}">Home</button>
+      <div class="dd">
+        <button class="tb dd-btn" data-act="toggle-saved" aria-haspopup="listbox" aria-expanded="${ddOpen}" aria-current="${!!onSaved}">
+          <span>${onSaved ? esc(cur.name) : "Saved Workouts"}</span><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="dd-menu" role="listbox" aria-label="Saved Workouts" ${ddOpen ? "" : "hidden"}>
+          <div class="dd-label">Saved Workouts</div>
+          ${items.length ? items.map(w => { const i = state.days.indexOf(w); return `
+            <button class="dd-item ${onSaved && cur === w ? "cur" : ""}" role="option" data-act="open-saved" data-i="${i}">
+              <span><b>${esc(w.name)}</b><small>${w.exercises.length} exercise${w.exercises.length === 1 ? "" : "s"}</small></span>
+              ${isFav(w) ? `<span class="heart" aria-label="Favorite">♥</span>` : ""}
+            </button>`; }).join("") : `<div class="dd-empty">No saved workouts yet.</div>`}
+          <div class="dd-sep"></div>
+          <button class="dd-item new" data-act="new-saved">+ New workout</button>
+        </div>
+      </div>
+      <button class="tb icon" data-view="settings" aria-current="${view === "settings"}" aria-label="Settings">${GEAR}</button>`;
   }
+
+  /* ---------- iPhone install tip ---------- */
+  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isStandalone = () => navigator.standalone === true || matchMedia("(display-mode: standalone)").matches;
+  function installTip() {
+    if (!isIOS() || isStandalone() || settings.tipDismissed) return "";
+    return `<div class="tip" role="note">
+      <div><b>Add Workout Split to your Home Screen</b>
+      Tap <span class="share-ic" aria-label="Share">${SHARE_IC}</span> Share, then <b class="inl">Add to Home Screen</b>. Your data is safer there: Safari can clear website data you haven't used in a while.
+      Data in Safari and in the Home Screen app are kept separately, so use Settings → Export / Import to move it.</div>
+      <button class="tip-x" data-act="dismiss-tip" aria-label="Dismiss tip">✕</button>
+    </div>`;
+  }
+  const SHARE_IC = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 7l4-4 4 4"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
+
   function renderHome() {
-    const last = lastWorkout();
-    let hero;
-    if (last) {
-      const li = state.days.findIndex(d => d.id === last.dayId);
-      const nextIdx = state.days.length ? (li >= 0 ? (li + 1) % state.days.length : 0) : -1;
-      const nd = state.days[nextIdx];
-      hero = `<div class="hero">
-        <div class="k">Last workout logged</div>
-        <div class="v">${esc(last.dayName)} <span>Day ${dayNumFor(last)}</span></div>
-        <div class="meta">${ago(last.date)} · ${fmtDate(last.date)} · ${last.done.length}/${last.total} exercises</div>
-        ${nd ? `<div class="next"><div>Next in rotation<b>${esc(nd.name)} · Day ${nextIdx + 1}</b></div><button class="btn-sm" data-act="go-day" data-day="${nextIdx}">Start</button></div>` : ""}
-      </div>`;
-    } else {
-      hero = `<div class="hero"><div class="k">Last workout logged</div>
-        <div class="v">None yet</div>
-        <div class="meta">Open a workout day and tap Complete on each exercise you finish. It shows up here.</div>
-        ${state.days.length ? `<div class="next"><div>Start with<b>${esc(state.days[0].name)} · Day 1</b></div><button class="btn-sm" data-act="go-day" data-day="0">Start</button></div>` : ""}
-      </div>`;
-    }
+    const last = lastWorkout(), next = nextInRotation(), nextIdx = next ? state.days.indexOf(next) : -1;
+    const nextRow = next ? `<div class="next"><div>${last ? "Next in rotation" : "Start with"}<b>${esc(next.name)}</b></div><button class="btn-sm" data-act="go-day" data-day="${nextIdx}">Start</button></div>` : "";
+    const hero = last
+      ? `<div class="hero">
+          <div class="k">Last workout logged</div>
+          <div class="v">${esc(workoutName(last))}</div>
+          <div class="meta">${ago(last.date)} · ${fmtDate(last.date)} · ${last.done.length}/${last.total} exercises</div>
+          ${nextRow}
+        </div>`
+      : `<div class="hero"><div class="k">Last workout logged</div>
+          <div class="v">None yet</div>
+          <div class="meta">Pick a saved workout, tap Start Workout, then tap Complete on each exercise you finish. It shows up here.</div>
+          ${nextRow}
+        </div>`;
     const ws = weekStart(), inWeek = sortedLogs().filter(l => parseDate(l.date) >= ws);
     const cnt = t => inWeek.filter(l => l.type === t).length;
     const cardioMin = inWeek.filter(l => l.type === "cardio").reduce((n, l) => n + (+l.minutes || 0), 0);
@@ -501,13 +716,13 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
     const notes = [cardioMin && `${fmtMin(cardioMin)} cardio`, cardioMi && `${+cardioMi.toFixed(2)} mi`, saunaMin && `${fmtMin(saunaMin)} sauna`].filter(Boolean);
     const recent = sortedLogs().slice(0, 15);
     return `
+      ${installTip()}
       <header class="head"><h1>Training <span>Log</span></h1><div class="total">${fmtDate(todayStr())}</div></header>
       <div class="sub"><span>Workouts, cardio, sauna and more</span><span class="sync">${esc(syncMsg)}</span></div>
-      ${offlineNote()}
       ${hero}
       <div class="section-label">Log</div>
       <div class="tiles">
-        <button class="tile t-workout" data-act="pick-day"><span class="ic">${ICONS.workout}</span><b>Workout</b><small>Pick a day or ad hoc</small></button>
+        <button class="tile t-workout" data-act="pick-day"><span class="ic">${ICONS.workout}</span><b>Workout</b><small>Saved or ad hoc</small></button>
         <button class="tile t-cardio" data-act="log" data-type="cardio"><span class="ic">${ICONS.cardio}</span><b>Cardio</b><small>Time or distance</small></button>
         <button class="tile t-sauna" data-act="log" data-type="sauna"><span class="ic">${ICONS.sauna}</span><b>Sauna</b><small>Time</small></button>
         <button class="tile t-misc" data-act="log" data-type="misc"><span class="ic">${ICONS.misc}</span><b>Misc</b><small>Anything else</small></button>
@@ -531,8 +746,42 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
       </div>
       <div class="section-label">Calendar</div>
       ${renderCalendar()}
-      <button class="addex" data-act="backup">Back up or restore data</button>
-      <p class="foot">Your data lives only on this phone. Back it up now and then.</p>`;
+      <button class="addex" data-view="settings">Settings, backup &amp; restore</button>
+      <p class="foot">Your data lives only on this phone. Export a backup now and then.</p>`;
+  }
+
+  /* ---------- settings ---------- */
+  function renderSettings() {
+    const last = settings.lastExport ? fmtDate(settings.lastExport.slice(0, 10)) : "Never";
+    return `
+      <header class="head"><h1>Settings</h1></header>
+      ${installTip()}
+      <div class="section-label">Backup</div>
+      <div class="panel">
+        <p class="pnote">Save a backup file to Files, iCloud, Google Drive or email. It has your saved workouts, favorites, history, sets, reps and weights.</p>
+        <div class="kv"><span>Last export</span><b>${esc(last)}</b></div>
+        <button class="btn primary" data-act="export">Export my data</button>
+        <button class="btn" data-act="import">Import backup</button>
+      </div>
+      <div class="section-label">Sharing</div>
+      <div class="panel">
+        <div class="field"><label for="f-myname">Your name (shown when you share a workout)</label>
+          <input type="text" id="f-myname" value="${esc(settings.name || "")}" maxlength="30" autocomplete="given-name" placeholder="e.g. Alex" data-setting="name"></div>
+        <button class="btn" data-act="import-link">Import a shared workout link</button>
+      </div>
+      <div class="section-label">Recently removed</div>
+      <div class="panel">
+        ${removed.length ? removed.slice().reverse().map((r, ri) => { const i = removed.length - 1 - ri; return `
+          <div class="removed"><span><b>${esc(r.workout.name)}</b><small>Removed ${esc(fmtDate(String(r.removedAt).slice(0, 10)))}</small></span>
+          <button class="btn-sm" data-act="restore-removed" data-i="${i}">Restore</button></div>`; }).join("")
+          : `<p class="pnote">Nothing here. Saved workouts you remove show up here so you can restore them.</p>`}
+      </div>
+      <div class="section-label">App</div>
+      <div class="panel">
+        <div class="kv"><span>Data version</span><b>${DATA_VERSION}</b></div>
+        <button class="btn" data-act="check-update">Check for updates</button>
+      </div>
+      <p class="foot">Everything stays on this phone. There's no account and no server.</p>`;
   }
 
   /* ---------- calendar ---------- */
@@ -584,42 +833,66 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
     });
   }
 
-  function renderDay(d) {
+  // One screen, three modes:
+  //  "detail"  saved workout: view and edit it, favorite/share/rename/remove, Start Workout at the bottom
+  //  "session" saved workout in progress: Complete each exercise
+  //  "adhoc"   ad hoc workout (building or doing it): Complete, Save?, Keep active, Delete
+  function renderDay(d, kind) {
     if (!d) return "";
-    const sess = sessionFor(d);
+    const doing = kind !== "detail";
+    const sess = doing ? sessionFor(d) : null;
     const doneIds = new Set((sess?.done || []).map(x => x.exId));
     const n = d.exercises.filter(e => doneIds.has(e.id)).length, tot = d.exercises.length;
-    const isAdhoc = d === adhoc;
-    return `
+    const tag = kind === "adhoc" ? (d.name === "Ad Hoc" ? "Workout" : "Ad Hoc") : kind === "session" ? "In progress" : "";
+    const fav = isFav(d);
+    const head = `
       <header class="head">
-        <h1><button data-act="edit-day" aria-label="${isAdhoc ? "Edit ad hoc workout" : "Edit day"}">${esc(d.name)} <span>${!isAdhoc ? `Day ${view + 1}` : d.name === "Ad Hoc" ? "Workout" : "Ad Hoc"}</span></button></h1>
+        <h1><button data-act="edit-day" aria-label="${kind === "adhoc" ? "Rename ad hoc workout" : "Rename workout"}">${esc(d.name)}${tag ? ` <span>${tag}</span>` : ""}</button></h1>
         <div class="total">${totalSets(d)} sets</div>
       </header>
-      <div class="sub"><span>Reps@lbs · BW = bodyweight</span><span class="sync">${esc(syncMsg)}</span></div>
-      ${offlineNote()}
-      ${tot ? `<div class="session"><span>Today</span><span class="bar"><i style="width:${tot ? (n / tot * 100) : 0}%"></i></span><b>${n}/${tot} done</b></div>` : ""}
-      <section class="list">
-        ${d.exercises.map((e, ei) => { const done = doneIds.has(e.id); return `
+      <div class="sub"><span>${kind === "detail" ? `Saved workout${fav ? " · ♥ Favorite" : ""}` : "Reps@lbs · BW = bodyweight"}</span><span class="sync">${esc(syncMsg)}</span></div>`;
+    const actions = kind === "detail" ? `
+      <div class="actions">
+        <button class="act ${fav ? "on" : ""}" data-act="fav" aria-pressed="${fav}">${fav ? "♥ Favorite" : "♡ Favorite"}</button>
+        <button class="act" data-act="share">Share</button>
+        <button class="act" data-act="edit-day">Rename</button>
+        <button class="act danger" data-act="remove-saved">Remove</button>
+      </div>` : "";
+    const progress = doing && tot ? `<div class="session"><span>Today</span><span class="bar"><i style="width:${n / tot * 100}%"></i></span><b>${n}/${tot} done</b></div>` : "";
+    const cards = d.exercises.map((e, ei) => { const done = doneIds.has(e.id); return `
           <article class="card ${done ? "done" : ""}" data-idx="${ei}">
             <div class="handle" data-handle="${ei}" role="button" tabindex="0" aria-label="Reorder ${esc(e.name)}. Drag, or use arrow keys">${ICONS.grip}</div>
             <div class="num">${ei + 1}</div>
             <div class="body">
               <div class="trow">
                 <button class="title" data-act="edit-ex" data-ex="${ei}"><b>${esc(e.name)}</b><small>${e.sets.length} set${e.sets.length === 1 ? "" : "s"} · tap to edit</small></button>
-                <button class="complete" aria-pressed="${done}" data-act="complete" data-ex="${ei}">${done ? ICONS.check + "Done" : "Complete"}</button>
+                ${doing ? `<button class="complete" aria-pressed="${done}" data-act="complete" data-ex="${ei}">${done ? ICONS.check + "Done" : "Complete"}</button>` : ""}
               </div>
               <div class="sets">
                 ${e.sets.map((s, si) => `
                   <button class="chip ${fmtSet(s) === "Tap to set" ? "empty" : ""}" data-act="edit-set" data-ex="${ei}" data-set="${si}"><i>S${si + 1}</i>${esc(fmtSet(s))}</button>`).join("")}
               </div>
             </div>
-          </article>`; }).join("")}
+          </article>`; }).join("");
+    const kept = kind === "adhoc" && keepId === d.id;
+    const foot = kind === "detail"
+      ? `<button class="btn primary start" data-act="start">Start Workout</button>`
+      : kind === "session"
+      ? `<button class="btn" data-act="back-detail">Back to workout details</button>
+         <p class="foot">Add weight or reps once all sets feel strong</p>`
+      : `<button class="btn primary" data-act="finish-adhoc">Finish ad hoc workout</button>
+         <div class="inline">
+           <button class="btn" data-act="save-adhoc">Save?</button>
+           <button class="btn ${kept ? "kept" : ""}" data-act="keep-adhoc" aria-pressed="${kept}">${kept ? "Kept active ✓" : "Keep active"}</button>
+         </div>
+         <button class="btn danger" data-act="delete-adhoc">Delete</button>
+         <p class="foot">${kept ? "Kept active: this workout stays until you finish or delete it." : "One-off session, logged on your calendar. It clears tomorrow unless you tap Keep active."}</p>`;
+    return `${head}${actions}${progress}
+      <section class="list">
+        ${cards}
         <button class="addex" data-act="add-ex">+ Add exercise</button>
       </section>
-      ${isAdhoc
-        ? `<button class="btn primary" data-act="finish-adhoc">Finish ad hoc workout</button>
-           <p class="foot">One-off session. It's logged on your calendar but isn't added to your days.</p>`
-        : `<p class="foot">Add weight or reps once all sets feel strong</p>`}`;
+      ${foot}`;
   }
 
   /* ---------- sheets ---------- */
@@ -653,7 +926,12 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
     $("#c-no", root).onclick = () => { box.innerHTML = ""; };
   }
 
-  const repOpts = cur => `<option value="">—</option>` + Array.from({ length: 50 }, (_, i) => 50 - i).map(n => `<option value="${n}" ${cur == n ? "selected" : ""}>${n}</option>`).join("");
+  // Reps listed smallest first (1 at the top, 50 at the bottom). A stored value outside 1–50 is kept as an option so it's never lost.
+  function repOpts(cur) {
+    const vals = Array.from({ length: 50 }, (_, i) => i + 1);
+    if (typeof cur === "number" && !vals.includes(cur)) { vals.push(cur); vals.sort((a, b) => a - b); }
+    return `<option value="">—</option>` + vals.map(n => `<option value="${n}" ${cur == n ? "selected" : ""}>${n}</option>`).join("");
+  }
   function weightOpts(cur) {
     const vals = []; for (let w = 2.5; w <= 600; w += 2.5) vals.push(+w.toFixed(1));
     if (typeof cur === "number" && !vals.includes(cur)) { vals.push(cur); vals.sort((a, b) => a - b); }
@@ -736,7 +1014,7 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
         const note = isNew
           ? `<div class="hint prompt">New exercise. Check the body parts it works, then choose your sets, reps and weight.</div>`
           : hist?.from === "log" ? `<div class="hint">Filled in from your last ${esc(entry.name)} on ${esc(fmtDate(hist.date))}. Change anything you like.</div>`
-          : hist ? `<div class="hint">Filled in from ${esc(hist.dayName)} in your program. Change anything you like.</div>`
+          : hist ? `<div class="hint">Filled in from your saved workout ${esc(hist.dayName)}. Change anything you like.</div>`
           : `<div class="hint prompt">You haven't logged this one yet. Choose your sets, reps and weight.</div>`;
         form.innerHTML = note
           + (isNew ? `<div class="field"><span class="lbl">Body parts (pick all that apply)</span><div class="parts">${BODY_PARTS.map(p => `<label class="check"><input type="checkbox" data-part="${esc(p)}"> ${esc(p)}</label>`).join("")}</div></div>` : "")
@@ -837,103 +1115,198 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
     });
   }
 
-  function daySheet(isNew) {
-    const idx = isNew ? state.days.length : view;
-    const day = isNew ? { id: uid(), name: "Full Body", exercises: [] } : state.days[view];
-    const canCopy = isNew && state.days.length;
-    const copyFrom = typeof view === "number" ? view : 0;
+  /* ---------- Saved Workouts ---------- */
+  const copyExercises = list => (list || []).map(e => ({ id: uid(), name: String(e.name || "Exercise"), sets: (e.sets || []).slice(0, MAX_SETS).map(cleanSet) }));
+  function openSaved(i) { ddOpen = false; detailIdx = i; view = "detail"; render(); window.scrollTo({ top: 0 }); }
+
+  // Ask for a name that isn't blank and isn't already used by another saved workout.
+  function nameSheet({ title, label, value = "", button, exceptId, extra = "", onSave }) {
     openSheet(`
-      <h2>${isNew ? "Add" : "Edit"} <em>Day ${idx + 1}</em></h2>
-      <div class="field"><label for="f-day">Workout name</label>
-        <input type="text" id="f-day" value="${esc(day.name)}" placeholder="e.g. Upper, Legs, Full Body" maxlength="30" autocomplete="off"></div>
-      ${canCopy ? `<label class="check"><input type="checkbox" id="f-copy"> Copy exercises from Day ${copyFrom + 1}</label>` : ""}
+      <h2>${title}</h2>
+      <div class="field"><label for="f-wname">${label}</label>
+        <input type="text" id="f-wname" value="${esc(value)}" placeholder="e.g. Upper Body, Legs, Hotel Gym" maxlength="40" autocomplete="off" enterkeyhint="done"></div>
+      ${extra}
+      <div class="err" id="err"></div>
       <div class="btns">
-        <button class="btn primary" id="b-save">${isNew ? "Add day" : "Save"}</button>
-        ${isNew ? "" : `<button class="btn danger" id="b-del">Delete Day ${idx + 1}</button><div id="confirm"></div>`}
+        <button class="btn primary" id="b-save">${button}</button>
         <button class="btn ghost" id="b-cancel">Cancel</button>
       </div>`, root => {
-      $("#b-save", root).onclick = () => {
-        day.name = $("#f-day", root).value.trim() || "Workout";
-        if (isNew) {
-          if ($("#f-copy", root)?.checked) day.exercises = JSON.parse(JSON.stringify(state.days[copyFrom].exercises)).map(e => ({ ...e, id: uid() }));
-          state.days.push(day); view = state.days.length - 1;
-        }
-        commit(); closeSheet();
-        if (isNew && !day.exercises.length) setTimeout(() => exSheet(null), 240);   // empty new day: go straight to picking exercises
+      const input = $("#f-wname", root), err = $("#err", root);
+      const go = () => {
+        const name = input.value.trim().replace(/\s+/g, " ");
+        if (!name) return err.textContent = "Enter a name.";
+        if (nameTaken(name, exceptId)) return err.textContent = `You already have a saved workout called “${name}”. Pick a different name.`;
+        onSave(name, root);
       };
+      $("#b-save", root).onclick = go;
+      input.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
       $("#b-cancel", root).onclick = closeSheet;
-      if (!isNew) $("#b-del", root).onclick = () => confirmInto(root,
-        `Delete Day ${idx + 1} (${esc(day.name)}) and its ${day.exercises.length} exercises? Later days move up. Past logs stay.`, "Delete",
-        () => { state.days.splice(idx, 1); view = state.days.length ? Math.min(idx, state.days.length - 1) : "home"; commit(); closeSheet(); });
+      setTimeout(() => { input.focus(); input.select(); }, 250);
     });
   }
 
-  function pickDaySheet() {
-    const last = lastWorkout();
-    const li = last ? state.days.findIndex(d => d.id === last.dayId) : -1;
-    const nextIdx = state.days.length ? (li >= 0 ? (li + 1) % state.days.length : 0) : -1;
-    openSheet(`
-      <h2>Pick a <em>workout day</em></h2>
-      ${state.days.length ? `<div class="daypick">${state.days.map((d, i) => `
-        <button data-i="${i}"><b>${esc(d.name)} <span>Day ${i + 1}</span>${i === nextIdx ? `<span class="tag">Next</span>` : ""}</b>
-        <small>${d.exercises.length} exercises · ${totalSets(d)} sets</small></button>`).join("")}</div>`
-        : `<p class="meta">No workout days yet. Add one first.</p>`}
-      <div class="or">or</div>
-      <div class="adhoc-pick">
-        ${adhoc ? `<button class="resume" id="b-adhoc-resume"><span class="ic">${ICONS.workout}</span><span><b>Continue ${esc(adhoc.name)}</b><small>Today's ad hoc workout · ${adhoc.exercises.length} exercise${adhoc.exercises.length === 1 ? "" : "s"}</small></span></button>` : ""}
-        <button id="b-adhoc"><span class="ic">${ICONS.misc}</span><span><b>${adhoc ? "New ad hoc workout" : "Ad hoc workout"}</b><small>One-off session. Not added to your days.</small></span></button>
-      </div>
-      <div class="btns">
-        ${state.days.length < MAX_DAYS ? `<button class="btn" id="b-new">+ Add a new day</button>` : ""}
-        <button class="btn ghost" id="b-cancel">Cancel</button>
-      </div>`, root => {
-      root.querySelectorAll(".daypick button").forEach(b => b.onclick = () => { view = +b.dataset.i; closeSheet(); window.scrollTo({ top: 0 }); });
-      const nb = $("#b-new", root); if (nb) nb.onclick = () => { closeSheet(); setTimeout(() => daySheet(true), 240); };
-      const rb = $("#b-adhoc-resume", root); if (rb) rb.onclick = () => { view = "adhoc"; closeSheet(); window.scrollTo({ top: 0 }); };
-      $("#b-adhoc", root).onclick = () => { startAdhoc(); closeSheet(); window.scrollTo({ top: 0 }); setTimeout(() => exSheet(null), 240); };
-      $("#b-cancel", root).onclick = closeSheet;
+  function newSavedSheet() {
+    ddOpen = false; render();
+    nameSheet({
+      title: "New <em>saved workout</em>", label: "Workout name", button: "Create workout",
+      extra: state.days.length ? `<div class="field"><label for="f-copy">Start from (optional)</label><select id="f-copy"><option value="">Empty workout</option>${savedOrder().map(w => `<option value="${esc(w.id)}">Copy of ${esc(w.name)}</option>`).join("")}</select></div>` : "",
+      onSave: (name, root) => {
+        const src = state.days.find(w => w.id === $("#f-copy", root)?.value);
+        const w = { id: uid(), name, exercises: src ? copyExercises(src.exercises) : [], savedAt: new Date().toISOString() };
+        state.days.push(w); detailIdx = state.days.length - 1; view = "detail";
+        commit(); closeSheet();
+        if (!w.exercises.length) setTimeout(() => exSheet(null), 240);
+      }
     });
   }
 
-  /* ---------- ad hoc workout (one-off, never added to the Day tabs) ---------- */
-  function startAdhoc() {
-    const date = todayStr();
-    adhoc = { id: `w_${date}_adhoc_${uid()}`, adhoc: true, name: "Ad Hoc", date, exercises: [] };
-    persistAdhoc(); view = "adhoc";
+  function renameSheet() {
+    const w = curDay(); if (!w) return;
+    if (w === adhoc) return nameSheetAdhoc();
+    nameSheet({
+      title: "Rename <em>workout</em>", label: "Workout name", value: w.name, button: "Save name", exceptId: w.id,
+      onSave: name => { w.name = name; commit(); closeSheet(); }
+    });
   }
-  // Repeat a past workout: today's ad hoc session, pre-loaded with the exercises completed that day
-  // and the sets recorded then. Editable like any session; doesn't move the Day rotation.
-  function repeatWorkout(l) {
-    const date = todayStr();
-    adhoc = {
-      id: `w_${date}_adhoc_${uid()}`, adhoc: true, date, repeatOf: l.id,
-      name: (l.adhoc ? l.dayName : `${l.dayName} · Day ${dayNumFor(l)}`).slice(0, 30),
-      exercises: l.done.map(e => ({ id: uid(), name: e.name, sets: (e.sets || []).slice(0, MAX_SETS).map(s => ({ r: s.r ?? null, w: s.w ?? null, pair: !!s.pair })) }))
-    };
-    persistAdhoc(); view = "adhoc";
-  }
-  function finishAdhoc() { adhoc = null; persistAdhoc(); view = "home"; render(); window.scrollTo({ top: 0 }); }
-  function adhocSheet() {
-    const log = sessionFor(adhoc);
+  function nameSheetAdhoc() {
     openSheet(`
       <h2>Ad hoc <em>workout</em></h2>
       <div class="field"><label for="f-day">Workout name</label>
         <input type="text" id="f-day" value="${esc(adhoc.name)}" placeholder="e.g. Hotel gym, Arms" maxlength="30" autocomplete="off"></div>
       <div class="btns">
-        <button class="btn primary" id="b-save">Save</button>
-        <button class="btn" id="b-finish">Finish workout</button>
-        <button class="btn danger" id="b-del">Discard ad hoc workout</button><div id="confirm"></div>
+        <button class="btn primary" id="b-save">Save name</button>
         <button class="btn ghost" id="b-cancel">Cancel</button>
       </div>`, root => {
       $("#b-save", root).onclick = () => {
         adhoc.name = $("#f-day", root).value.trim() || "Ad Hoc";
+        const log = sessionFor(adhoc);
         if (log) putLog({ ...log, dayName: adhoc.name, updatedTs: Date.now() });
         commit(); closeSheet();
       };
-      $("#b-finish", root).onclick = () => { closeSheet(); setTimeout(finishAdhoc, 0); };
-      $("#b-del", root).onclick = () => confirmInto(root,
-        `Discard this ad hoc workout${log ? ` and its log (${log.done.length} exercise${log.done.length === 1 ? "" : "s"} completed)` : ""}?`, "Discard",
-        () => { if (log) removeLog(log.id); closeSheet(); setTimeout(finishAdhoc, 0); });
+      $("#b-cancel", root).onclick = closeSheet;
+    });
+  }
+
+  // "Save?": copy a workout (ad hoc, or one from History) into Saved Workouts under a new name. The source is unchanged.
+  function saveAsSheet(exercises, suggested) {
+    if (!exercises.length) return toast("Add an exercise first, then save.");
+    nameSheet({
+      title: "Save to <em>Saved Workouts</em>", label: "Name for this saved workout", value: uniqueName(suggested || "Workout"), button: "Save workout",
+      extra: `<p class="pnote">This saves a copy with ${exercises.length} exercise${exercises.length === 1 ? "" : "s"}. The original stays as it is.</p>`,
+      onSave: name => {
+        state.days.push({ id: uid(), name, exercises: copyExercises(exercises), savedAt: new Date().toISOString() });
+        commit(); closeSheet(); toast(`Saved “${name}” to Saved Workouts`);
+      }
+    });
+  }
+
+  function toggleFav() {
+    const w = curDay(); if (!w || w === adhoc) return;
+    favs = isFav(w) ? favs.filter(id => id !== w.id) : [...favs, w.id];
+    persistFavs(); render();
+    toast(isFav(w) ? "Added to Favorites" : "Removed from Favorites");
+  }
+
+  // Remove moves the workout to "Recently removed" (Settings), where it can be restored. Nothing is erased; History is untouched.
+  function removeSavedSheet() {
+    const w = curDay(); if (!w || w === adhoc) return;
+    openSheet(`
+      <h2>Remove <em>${esc(w.name)}</em>?</h2>
+      <p class="pnote">It leaves Saved Workouts${isFav(w) ? " and Favorites" : ""}. Your History isn't affected, and you can restore it from Settings → Recently removed.</p>
+      <div class="btns">
+        <button class="btn danger" id="b-yes">Remove from Saved Workouts</button>
+        <button class="btn ghost" id="b-cancel">Keep it</button>
+      </div>`, root => {
+      $("#b-yes", root).onclick = () => {
+        removed.push({ workout: JSON.parse(JSON.stringify(w)), removedAt: new Date().toISOString(), wasFavorite: isFav(w) });
+        if (!persistRemoved()) { removed.pop(); return; }   // only drop it from the list once it's safely in Recently removed
+        favs = favs.filter(id => id !== w.id); persistFavs();
+        state.days = state.days.filter(x => x !== w); view = "home";
+        commit(); closeSheet(); toast(`Removed “${w.name}”`);
+      };
+      $("#b-cancel", root).onclick = closeSheet;
+    });
+  }
+  function restoreRemoved(i) {
+    const r = removed[i]; if (!r) return;
+    const w = normalizeWorkout(r.workout);
+    if (state.days.some(x => x.id === w.id)) w.id = uid();
+    w.name = uniqueName(w.name);
+    state.days.push(w);
+    if (r.wasFavorite) { favs.push(w.id); persistFavs(); }
+    save();
+    removed.splice(i, 1); persistRemoved();
+    render(); toast(`Restored “${w.name}”`);
+  }
+
+  function pickDaySheet() {
+    const next = nextInRotation(), items = savedOrder();
+    openSheet(`
+      <h2>Pick a <em>workout</em></h2>
+      ${items.length ? `<div class="daypick">${items.map(w => `
+        <button data-i="${state.days.indexOf(w)}"><b>${esc(w.name)}${isFav(w) ? ` <span class="heart">♥</span>` : ""}${w === next ? `<span class="tag">Next</span>` : ""}</b>
+        <small>${w.exercises.length} exercises · ${totalSets(w)} sets</small></button>`).join("")}</div>`
+        : `<p class="meta">No saved workouts yet. Create one, or start an ad hoc workout.</p>`}
+      <div class="or">or</div>
+      <div class="adhoc-pick">
+        ${adhoc ? `<button class="resume" id="b-adhoc-resume"><span class="ic">${ICONS.workout}</span><span><b>Continue ${esc(adhoc.name)}</b><small>Ad hoc workout${keepId === adhoc.id ? " · kept active" : ""} · ${adhoc.exercises.length} exercise${adhoc.exercises.length === 1 ? "" : "s"}</small></span></button>` : ""}
+        <button id="b-adhoc"><span class="ic">${ICONS.misc}</span><span><b>${adhoc ? "New ad hoc workout" : "Ad hoc workout"}</b><small>One-off session. Not added to Saved Workouts unless you tap Save?</small></span></button>
+      </div>
+      <div class="btns">
+        <button class="btn" id="b-new">+ New saved workout</button>
+        <button class="btn ghost" id="b-cancel">Cancel</button>
+      </div>`, root => {
+      root.querySelectorAll(".daypick button").forEach(b => b.onclick = () => { closeSheet(); setTimeout(() => openSaved(+b.dataset.i), 0); });
+      $("#b-new", root).onclick = () => { closeSheet(); setTimeout(newSavedSheet, 240); };
+      const rb = $("#b-adhoc-resume", root); if (rb) rb.onclick = () => { view = "adhoc"; closeSheet(); window.scrollTo({ top: 0 }); };
+      $("#b-adhoc", root).onclick = () => {
+        const go = () => { startAdhoc(); closeSheet(); window.scrollTo({ top: 0 }); setTimeout(() => exSheet(null), 240); };
+        if (!adhoc || !adhoc.exercises.length) return go();
+        confirmInto(root, `Start a new ad hoc workout? “${esc(adhoc.name)}” will be cleared${sessionFor(adhoc) ? "; its completed exercises stay in History" : ""}.`, "Start new", go, "#confirm-new");
+      };
+      $("#b-cancel", root).onclick = closeSheet;
+    });
+    $("#sheetInner .adhoc-pick").insertAdjacentHTML("afterend", `<div id="confirm-new"></div>`);
+  }
+
+  /* ---------- ad hoc workout (one-off; becomes a Saved Workout only via Save?) ---------- */
+  function startAdhoc() {
+    const date = todayStr();
+    adhoc = { id: `w_${date}_adhoc_${uid()}`, adhoc: true, name: "Ad Hoc", date, exercises: [] };
+    keepId = null; persistAdhoc(); view = "adhoc";
+  }
+  // Repeat a past workout: an ad hoc session pre-loaded with the exercises completed that day
+  // and the sets recorded then. Editable like any session; doesn't move the rotation.
+  function repeatWorkout(l) {
+    const date = todayStr();
+    adhoc = {
+      id: `w_${date}_adhoc_${uid()}`, adhoc: true, date, repeatOf: l.id,
+      name: workoutName(l).slice(0, 30),
+      exercises: copyExercises(l.done)
+    };
+    keepId = null; persistAdhoc(); view = "adhoc";
+  }
+  function finishAdhoc() { adhoc = null; keepId = null; persistAdhoc(); view = "home"; render(); window.scrollTo({ top: 0 }); }
+  function toggleKeep() {
+    if (!adhoc) return;
+    keepId = keepId === adhoc.id ? null : adhoc.id;
+    persistAdhoc(); render();
+    toast(keepId ? "Kept active until you finish or delete it" : "No longer kept active");
+  }
+  function deleteAdhocSheet() {
+    const log = sessionFor(adhoc), done = log?.done.length || 0;
+    openSheet(`
+      <h2>Delete <em>${esc(adhoc.name)}</em>?</h2>
+      <p class="pnote">This deletes the in-progress ad hoc workout.${done ? ` You completed ${done} exercise${done === 1 ? "" : "s"}; ${done === 1 ? "it stays" : "they stay"} in History unless you check the box below.` : ""}</p>
+      ${done ? `<label class="check"><input type="checkbox" id="f-dellog"> Also delete the completed exercises from History</label>` : ""}
+      <div class="btns">
+        <button class="btn danger" id="b-yes">Delete ad hoc workout</button>
+        <button class="btn ghost" id="b-cancel">Keep it</button>
+      </div>`, root => {
+      $("#b-yes", root).onclick = () => {
+        if (log && $("#f-dellog", root)?.checked) removeLog(log.id);
+        closeSheet(); setTimeout(finishAdhoc, 0); toast("Ad hoc workout deleted");
+      };
       $("#b-cancel", root).onclick = closeSheet;
     });
   }
@@ -984,71 +1357,345 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
     const di = l.adhoc ? -1 : state.days.findIndex(d => d.id === l.dayId);
     const canResume = l.adhoc && adhoc && adhoc.id === l.id;
     openSheet(`
-      <h2>${esc(l.dayName)} <em>${l.adhoc ? "Ad Hoc" : `Day ${dayNumFor(l)}`}</em></h2>
+      <h2>${esc(workoutName(l))}${l.adhoc ? " <em>Ad Hoc</em>" : ""}</h2>
       <div class="meta" style="color:var(--muted);font-size:14px">${fmtDate(l.date)} · ${l.done.length}/${l.total} exercises completed</div>
       <div class="detail">${l.done.map(e => `<div class="ex"><b>${esc(e.name)}</b><span>${e.sets.map(fmtSet).map(esc).join(" · ")}</span></div>`).join("")}</div>
       <div class="btns">
-        ${di >= 0 && l.date === todayStr() ? `<button class="btn primary" id="b-open">Continue Day ${di + 1}</button>` : ""}
+        ${di >= 0 && l.date === todayStr() ? `<button class="btn primary" id="b-open">Continue workout</button>` : ""}
         ${canResume ? `<button class="btn primary" id="b-open">Continue ad hoc workout</button>` : ""}
         ${!canResume && l.done.length ? `<button class="btn primary" id="b-repeat">Repeat this workout</button><div id="confirm-rep"></div>` : ""}
-        ${di >= 0 && l.date !== todayStr() ? `<button class="btn" id="b-open">Open Day ${di + 1}</button>` : ""}
+        ${l.done.length ? `<button class="btn" id="b-saveas">Save?</button>` : ""}
+        ${di >= 0 ? `<button class="btn" id="b-saved">Open saved workout</button>` : ""}
         <button class="btn danger" id="b-del">Delete this workout log</button><div id="confirm"></div>
         <button class="btn ghost" id="b-cancel">Close</button>
       </div>`, root => {
       const ob = $("#b-open", root); if (ob) ob.onclick = () => { view = canResume ? "adhoc" : di; closeSheet(); window.scrollTo({ top: 0 }); };
+      const sb = $("#b-saved", root); if (sb) sb.onclick = () => { closeSheet(); setTimeout(() => openSaved(di), 0); };
+      const sa = $("#b-saveas", root); if (sa) sa.onclick = () => { closeSheet(); setTimeout(() => saveAsSheet(l.done, workoutName(l)), 240); };
       const rb = $("#b-repeat", root);
       if (rb) rb.onclick = () => {
         const go = () => { repeatWorkout(l); closeSheet(); window.scrollTo({ top: 0 }); };
         if (!adhoc || !adhoc.exercises.length) return go();
         const kept = sessionFor(adhoc)?.done.length || 0;
-        confirmInto(root, `Replace today's ad hoc workout (${esc(adhoc.name)})?${kept === 1 ? " The exercise you completed stays logged." : kept ? ` The ${kept} exercises you completed stay logged.` : ""}`, "Replace", go, "#confirm-rep");
+        confirmInto(root, `Replace your ad hoc workout (${esc(adhoc.name)})?${kept === 1 ? " The exercise you completed stays logged." : kept ? ` The ${kept} exercises you completed stay logged.` : ""}`, "Replace", go, "#confirm-rep");
       };
-      $("#b-del", root).onclick = () => confirmInto(root, "Delete this workout log? Your program is not affected.", "Delete", () => { removeLog(l.id); closeSheet(); });
+      $("#b-del", root).onclick = () => confirmInto(root, "Delete this workout log? Your saved workouts are not affected.", "Delete", () => { removeLog(l.id); closeSheet(); });
       $("#b-cancel", root).onclick = closeSheet;
     });
   }
 
-  function backupSheet() {
-    const data = JSON.stringify({ app: "workout-split", version: 1, exportedAt: new Date().toISOString(), days: state.days, logs, exercises: customEx });
+  /* ---------- toast + update banner ---------- */
+  let toastTimer = null;
+  function toast(msg) {
+    const t = $("#toast"); if (!t) return;
+    t.textContent = msg; t.hidden = false;
+    requestAnimationFrame(() => t.classList.add("on"));
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.classList.remove("on"); setTimeout(() => { t.hidden = true; }, 250); }, 2800);
+  }
+
+  /* ---------- backup: export ---------- */
+  function bundle() {
+    return {
+      app: "workout-split", dataVersion: DATA_VERSION, exportedAt: new Date().toISOString(),
+      saved: state.days, favorites: favs, removed, logs, exercises: customEx,
+      adhoc, keepActive: keepId, settings: { name: settings.name || "" }
+    };
+  }
+  function markExported() { settings.lastExport = new Date().toISOString(); persistSettings(); render(); }
+  async function exportData() {
+    save();   // make sure the newest edits are in the file
+    const text = JSON.stringify(bundle(), null, 1);
+    const fname = `workout-split-backup-${todayStr()}.json`;
+    let file = null;
+    try { file = new File([text], fname, { type: "application/json" }); } catch {}
+    if (file && navigator.canShare?.({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: "Workout Split backup" }); markExported(); return toast("Backup exported"); }
+      catch (e) { if (e?.name === "AbortError") return; }   // closed the share sheet: nothing exported
+    }
+    try {
+      const url = URL.createObjectURL(file || new Blob([text], { type: "application/json" }));
+      const a = document.createElement("a"); a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      markExported(); toast(`Downloaded ${fname}`);
+    } catch { copyBackupSheet(text); }
+  }
+  function copyBackupSheet(text) {
     openSheet(`
-      <h2>Back up <em>&amp; restore</em></h2>
-      <p style="margin:0;color:var(--muted);font-size:14px">Copy the backup and keep it somewhere safe, like a note or an email to yourself. To restore, paste a backup below. Restoring replaces everything on this phone.</p>
-      <div class="field"><label for="f-backup">Backup data</label><textarea id="f-backup" rows="6" spellcheck="false" style="font-size:12px;font-family:ui-monospace,monospace"></textarea></div>
+      <h2>Copy <em>backup</em></h2>
+      <p class="pnote">This phone couldn't save a file. Copy the text below and keep it somewhere safe, like a note or an email to yourself.</p>
+      <div class="field"><label for="f-backup">Backup data</label><textarea id="f-backup" rows="6" spellcheck="false" class="mono"></textarea></div>
       <div class="err" id="err"></div>
-      <div class="btns">
-        <button class="btn primary" id="b-copy">Copy backup</button>
-        <button class="btn" id="b-restore">Restore from pasted backup</button><div id="confirm"></div>
-        <button class="btn ghost" id="b-cancel">Close</button>
-      </div>`, root => {
-      const ta = $("#f-backup", root), err = $("#err", root);
-      ta.value = data;
+      <div class="btns"><button class="btn primary" id="b-copy">Copy backup</button><button class="btn ghost" id="b-cancel">Close</button></div>`, root => {
+      const ta = $("#f-backup", root), err = $("#err", root); ta.value = text;
       $("#b-copy", root).onclick = async () => {
-        ta.value = data;
-        try { await navigator.clipboard.writeText(data); err.style.color = "var(--ok)"; err.textContent = "Backup copied. Paste it somewhere safe."; }
+        try { await navigator.clipboard.writeText(text); markExported(); err.style.color = "var(--ok)"; err.textContent = "Backup copied."; }
         catch { ta.focus(); ta.select(); err.style.color = "var(--muted)"; err.textContent = "Text selected. Use your phone's Copy."; }
-      };
-      $("#b-restore", root).onclick = () => {
-        let parsed;
-        try { parsed = JSON.parse(ta.value); } catch { err.style.color = ""; return err.textContent = "That isn't a valid backup. Paste the full backup text."; }
-        if (!parsed || !Array.isArray(parsed.days)) { err.style.color = ""; return err.textContent = "That backup has no workout days in it."; }
-        confirmInto(root, `Replace everything on this phone with this backup (${parsed.days.length} days, ${(parsed.logs || []).length} log entries)?`, "Restore", () => {
-          state = normalize(parsed); logs = Array.isArray(parsed.logs) ? parsed.logs : [];
-          customEx = cleanCustom(parsed.exercises); persistCustom();   // older backups have no "exercises"; that's fine
-          view = "home"; persistLocalLogs(); commit(); closeSheet();
-        });
       };
       $("#b-cancel", root).onclick = closeSheet;
     });
+  }
+
+  /* ---------- backup: import (validated, migrated, all-or-nothing) ---------- */
+  const isDateStr = s => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+  const LOG_TYPES = ["workout", "cardio", "sauna", "misc"];
+  // Accepts every backup format: version 1 ({version:1, days, logs}) and version 2 ({dataVersion:2, saved, ...}).
+  function parseBackup(text) {
+    let o;
+    try { o = JSON.parse(String(text).trim()); } catch { return { error: "That file isn't a Workout Split backup (it couldn't be read)." }; }
+    if (!o || typeof o !== "object" || Array.isArray(o)) return { error: "That file isn't a Workout Split backup." };
+    if (o.app && o.app !== "workout-split") return { error: "That backup is from a different app." };
+    const ver = o.dataVersion || (Array.isArray(o.days) ? 1 : 0);
+    if (!ver) return { error: "That file doesn't contain any Workout Split data." };
+    if (ver > DATA_VERSION) return { error: "That backup was made by a newer version of the app. Update the app (Settings → Check for updates), then try again." };
+    let saved, favorites;
+    if (ver === 1) { saved = v1DaysToSaved(o.days); favorites = saved.map(w => w.id); }
+    else {
+      if (!Array.isArray(o.saved)) return { error: "That backup is missing its saved workouts." };
+      saved = normalizeWorkouts(o.saved);
+      favorites = (Array.isArray(o.favorites) ? o.favorites : []).filter(id => saved.some(w => w.id === id));
+    }
+    const logsIn = o.logs == null ? [] : o.logs;
+    if (!Array.isArray(logsIn)) return { error: "That backup's history is damaged." };
+    for (const l of logsIn) {
+      if (!l || typeof l.id !== "string" || !LOG_TYPES.includes(l.type) || !isDateStr(l.date)) return { error: "That backup's history is damaged, so nothing was imported." };
+      if (l.type === "workout" && !Array.isArray(l.done)) return { error: "That backup's workout history is damaged, so nothing was imported." };
+    }
+    const removedIn = (Array.isArray(o.removed) ? o.removed : []).filter(r => r && r.workout).map(r => ({ ...r, workout: normalizeWorkout(r.workout) }));
+    return { data: { version: ver, exportedAt: o.exportedAt || null, saved, favorites, removed: removedIn, logs: logsIn,
+      exercises: cleanCustom(o.exercises), adhoc: o.adhoc && o.adhoc.id ? o.adhoc : null, keepActive: typeof o.keepActive === "string" ? o.keepActive : null,
+      name: o.settings?.name || "" } };
+  }
+  // Merge never deletes: it adds what's missing. A saved workout that differs from yours is added as a copy.
+  function mergedState(inc) {
+    const out = { days: state.days.map(w => w), favs: [...favs], logs: [...logs], customEx: [...customEx], removed: [...removed] };
+    const sameContent = (a, b) => JSON.stringify([a.name, a.exercises.map(e => [e.name, e.sets])]) === JSON.stringify([b.name, b.exercises.map(e => [e.name, e.sets])]);
+    const taken = n => out.days.some(w => w.name.toLowerCase() === n.toLowerCase());
+    let added = 0, copies = 0;
+    inc.saved.forEach(w => {
+      const mine = out.days.find(x => x.id === w.id);
+      if (mine && sameContent(mine, w)) return;
+      const copy = { ...w, id: mine ? uid() : w.id, name: uniqueName(mine ? `${w.name} (imported)` : w.name, taken) };
+      out.days.push(copy); mine ? copies++ : added++;
+      if (inc.favorites.includes(w.id) && !out.favs.includes(copy.id)) out.favs.push(copy.id);
+    });
+    const haveLog = new Set(out.logs.map(l => l.id)); let newLogs = 0;
+    inc.logs.forEach(l => { if (!haveLog.has(l.id)) { out.logs.push(l); newLogs++; } });
+    inc.exercises.forEach(e => { if (!out.customEx.some(x => exKey(x.name) === exKey(e.name))) out.customEx.push(e); });
+    inc.removed.forEach(r => { if (!out.removed.some(x => x.workout.id === r.workout.id && x.removedAt === r.removedAt)) out.removed.push(r); });
+    return { out, summary: `Added ${added + copies} saved workout${added + copies === 1 ? "" : "s"}${copies ? ` (${copies} as copies)` : ""} and ${newLogs} history entr${newLogs === 1 ? "y" : "ies"}.` };
+  }
+  // Write every slot or none: snapshot what's there, write, and put the snapshot back if any write fails.
+  function writeAll(slots) {
+    const before = {};
+    Object.keys(slots).forEach(k => { before[k] = localStorage.getItem(k); });
+    for (const [k, v] of Object.entries(slots)) {
+      if (!writeRaw(k, v)) {
+        Object.entries(before).forEach(([bk, bv]) => { try { bv == null ? localStorage.removeItem(bk) : localStorage.setItem(bk, bv); } catch {} });
+        return false;
+      }
+    }
+    return true;
+  }
+  function slotsFor(s) {
+    return {
+      [LOCAL_SAVED]: JSON.stringify({ dataVersion: DATA_VERSION, workouts: s.days, updatedAt: Date.now() }),
+      [LOCAL_FAVS]: JSON.stringify(s.favs), [LOCAL_LOGS]: JSON.stringify(s.logs),
+      [LOCAL_EXERCISES]: JSON.stringify(s.customEx), [LOCAL_REMOVED]: JSON.stringify(s.removed)
+    };
+  }
+  function applyState(s) {
+    state = { days: s.days }; favs = s.favs; logs = s.logs; customEx = s.customEx; removed = s.removed;
+    view = "home"; render();
+  }
+  function importSheet() {
+    openSheet(`
+      <h2>Import <em>backup</em></h2>
+      <p class="pnote">Choose a backup file you exported, or paste backup text. Backups from every version of the app work.</p>
+      <label class="btn primary filebtn">Choose backup file<input type="file" id="f-file" accept=".json,application/json,text/plain"></label>
+      <div class="field"><label for="f-paste">Or paste backup text</label><textarea id="f-paste" rows="4" spellcheck="false" class="mono"></textarea></div>
+      <button class="btn" id="b-paste">Use pasted text</button>
+      <div class="err" id="err"></div>
+      <div id="imp-choice"></div>
+      <div class="btns"><button class="btn ghost" id="b-cancel">Cancel</button></div>`, root => {
+      const err = $("#err", root), box = $("#imp-choice", root);
+      const handle = text => {
+        err.textContent = ""; box.innerHTML = "";
+        const { data, error } = parseBackup(text);
+        if (error) return err.textContent = error;
+        const when = data.exportedAt ? ` from ${fmtDate(String(data.exportedAt).slice(0, 10))}` : "";
+        box.innerHTML = `<div class="panel inset">
+          <p class="pnote"><b>Backup${esc(when)}</b>: ${data.saved.length} saved workout${data.saved.length === 1 ? "" : "s"}, ${data.logs.length} history entr${data.logs.length === 1 ? "y" : "ies"}.</p>
+          <button class="btn primary" id="b-merge">Merge into my data</button>
+          <p class="pnote">Merge keeps everything on this phone and adds what's missing.</p>
+          <button class="btn danger" id="b-replace">Replace my data…</button><div id="confirm"></div>
+        </div>`;
+        $("#b-merge", root).onclick = () => {
+          const { out, summary } = mergedState(data);
+          if (!writeAll(slotsFor(out))) return err.textContent = "Couldn't save the import (phone storage may be full). Nothing was changed.";
+          applyState(out); closeSheet(); toast(`Backup merged. ${summary}`);
+        };
+        $("#b-replace", root).onclick = () => confirmInto(root,
+          `<b>Replace everything on this phone?</b> Your current ${state.days.length} saved workouts and ${logs.length} history entries will be replaced by this backup. A copy of your current data is kept on this phone so it can be recovered.`,
+          "Replace my data", () => {
+            const snapshot = {}; ALL_DATA_KEYS.forEach(k => { const v = localStorage.getItem(k); if (v != null) snapshot[k] = v; });
+            if (!writeJSON(LOCAL_PRE_RESTORE, { takenAt: new Date().toISOString(), items: snapshot })) return err.textContent = "Couldn't make a safety copy first (phone storage may be full). Nothing was changed.";
+            const out = { days: data.saved, favs: data.favorites, logs: data.logs, customEx: data.exercises, removed: data.removed };
+            if (!writeAll(slotsFor(out))) return err.textContent = "Couldn't save the import (phone storage may be full). Nothing was changed.";
+            applyState(out); closeSheet(); toast("Backup restored");
+          });
+      };
+      $("#f-file", root).addEventListener("change", e => {
+        const f = e.target.files?.[0]; if (!f) return;
+        if (f.size > 20e6) return err.textContent = "That file is too large to be a Workout Split backup.";
+        f.text().then(handle, () => { err.textContent = "Couldn't read that file."; });
+      });
+      $("#b-paste", root).onclick = () => { const t = $("#f-paste", root).value; if (!t.trim()) return err.textContent = "Paste your backup text first."; handle(t); };
+      $("#b-cancel", root).onclick = closeSheet;
+    });
+  }
+
+  /* ---------- share a saved workout as a link ---------- */
+  const b64u = bytes => { let s = ""; bytes.forEach(b => s += String.fromCharCode(b)); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
+  const unb64u = str => { const s = atob(str.replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(s, c => c.charCodeAt(0)); };
+  async function encodeWorkout(w) {
+    const payload = { v: 1, n: w.name, e: w.exercises.map(e => [e.name, e.sets.map(s => [s.r ?? null, s.w ?? null, s.pair ? 1 : 0])]) };
+    const json = new TextEncoder().encode(JSON.stringify(payload));
+    if (window.CompressionStream) {
+      try { const cs = new Blob([json]).stream().pipeThrough(new CompressionStream("deflate-raw")); return "z" + b64u(new Uint8Array(await new Response(cs).arrayBuffer())); } catch {}
+    }
+    return "j" + b64u(json);
+  }
+  async function decodeWorkout(code) {
+    if (!code || !/^[zj][A-Za-z0-9_-]+$/.test(code)) throw new Error("bad");
+    let bytes = unb64u(code.slice(1));
+    if (code[0] === "z") {
+      if (!window.DecompressionStream) throw new Error("old");
+      const ds = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+      bytes = new Uint8Array(await new Response(ds).arrayBuffer());
+    }
+    const p = JSON.parse(new TextDecoder().decode(bytes));
+    if (!p || p.v !== 1 || typeof p.n !== "string" || !Array.isArray(p.e) || !p.e.length) throw new Error("bad");
+    const num = v => v === "BW" ? "BW" : typeof v === "number" && isFinite(v) && v >= 0 && v < 10000 ? v : null;
+    return {
+      name: p.n.trim().slice(0, 40) || "Shared workout",
+      exercises: p.e.slice(0, 60).map(x => {
+        if (!Array.isArray(x) || typeof x[0] !== "string" || !Array.isArray(x[1])) throw new Error("bad");
+        return { id: uid(), name: x[0].slice(0, 60), sets: x[1].slice(0, MAX_SETS).map(s => ({ r: num(s?.[0]), w: num(s?.[1]), pair: !!s?.[2] })) };
+      })
+    };
+  }
+  async function shareSaved() {
+    const w = curDay(); if (!w || w === adhoc) return;
+    if (!settings.name) return askNameThenShare();
+    const url = `${location.origin}${location.pathname}#w=${await encodeWorkout(w)}`;
+    const text = `${settings.name} shared ${w.name} with you.`;
+    if (navigator.share) {
+      try { await navigator.share({ title: w.name, text, url }); return; }
+      catch (e) { if (e?.name === "AbortError") return; }
+    }
+    try { await navigator.clipboard.writeText(`${text} ${url}`); toast("Link copied. Paste it in a message."); }
+    catch { copyTextSheet("Share link", `${text} ${url}`); }
+  }
+  function askNameThenShare() {
+    openSheet(`
+      <h2>Your <em>name</em></h2>
+      <p class="pnote">Shared workouts say “[your name] shared [workout] with you.” You can change this later in Settings.</p>
+      <div class="field"><label for="f-n">Your name</label><input type="text" id="f-n" maxlength="30" autocomplete="given-name" placeholder="e.g. Alex"></div>
+      <div class="err" id="err"></div>
+      <div class="btns"><button class="btn primary" id="b-save">Continue to share</button><button class="btn ghost" id="b-cancel">Cancel</button></div>`, root => {
+      $("#b-save", root).onclick = () => {
+        const n = $("#f-n", root).value.trim(); if (!n) return $("#err", root).textContent = "Enter your name.";
+        settings.name = n; persistSettings(); closeSheet(); setTimeout(shareSaved, 250);
+      };
+      $("#b-cancel", root).onclick = closeSheet;
+      setTimeout(() => $("#f-n", root)?.focus(), 250);
+    });
+  }
+  function copyTextSheet(title, text) {
+    openSheet(`
+      <h2>${esc(title)}</h2>
+      <div class="field"><textarea id="f-t" rows="4" class="mono" readonly></textarea></div>
+      <p class="pnote">Select the text and use your phone's Copy.</p>
+      <div class="btns"><button class="btn ghost" id="b-cancel">Close</button></div>`, root => {
+      const ta = $("#f-t", root); ta.value = text; setTimeout(() => { ta.focus(); ta.select(); }, 250);
+      $("#b-cancel", root).onclick = closeSheet;
+    });
+  }
+  async function importShared(code) {
+    let w;
+    try { w = await decodeWorkout(code); }
+    catch (e) {
+      return toast(e?.message === "old" ? "This phone's browser is too old to open shared workouts. Update iOS or Chrome, then try again." : "That shared workout link is broken or incomplete. Ask for it to be shared again.");
+    }
+    w.id = uid(); w.name = uniqueName(w.name); w.savedAt = new Date().toISOString();
+    state.days.push(w); save();                       // new, editable, not a Favorite
+    openSaved(state.days.length - 1); toast("Workout imported");
+  }
+  const linkCode = text => (String(text).match(/#w=([zj][A-Za-z0-9_-]+)/) || [])[1] || null;
+  function importLinkSheet() {
+    openSheet(`
+      <h2>Import a <em>shared workout</em></h2>
+      <p class="pnote">Paste the link someone shared with you.</p>
+      <div class="field"><label for="f-link">Shared link</label><textarea id="f-link" rows="3" spellcheck="false" class="mono"></textarea></div>
+      <div class="err" id="err"></div>
+      <div class="btns"><button class="btn primary" id="b-go">Import workout</button><button class="btn ghost" id="b-cancel">Cancel</button></div>`, root => {
+      $("#b-go", root).onclick = () => {
+        const code = linkCode($("#f-link", root).value);
+        if (!code) return $("#err", root).textContent = "That doesn't look like a Workout Split link. Paste the whole link.";
+        closeSheet(); setTimeout(() => importShared(code), 250);
+      };
+      $("#b-cancel", root).onclick = closeSheet;
+    });
+  }
+  // Opened from a shared link (…/#w=…). On iPhone, links open in Safari, whose data is separate from the
+  // Home Screen app, so offer to copy the link for pasting into the app instead.
+  function handleShareLink() {
+    const code = linkCode(location.hash);
+    if (!location.hash.startsWith("#w=")) return;
+    try { history.replaceState(null, "", location.pathname + location.search); } catch {}
+    if (!code) return toast("That shared workout link is broken or incomplete. Ask for it to be shared again.");
+    if (isIOS() && !isStandalone()) {
+      const link = `${location.origin}${location.pathname}#w=${code}`;
+      return openSheet(`
+        <h2>Someone shared a <em>workout</em></h2>
+        <p class="pnote">If you use Workout Split from your Home Screen, its data is separate from Safari. Copy the link, open the app from your Home Screen, then go to Settings → Import a shared workout link.</p>
+        <div class="btns">
+          <button class="btn primary" id="b-copy">Copy link for my Home Screen app</button>
+          <button class="btn" id="b-here">Import here in Safari</button>
+          <button class="btn ghost" id="b-cancel">Cancel</button>
+        </div>`, root => {
+        $("#b-copy", root).onclick = async () => {
+          try { await navigator.clipboard.writeText(link); closeSheet(); toast("Link copied. Open the app from your Home Screen."); }
+          catch { closeSheet(); setTimeout(() => copyTextSheet("Shared workout link", link), 250); }
+        };
+        $("#b-here", root).onclick = () => { closeSheet(); setTimeout(() => importShared(code), 250); };
+        $("#b-cancel", root).onclick = closeSheet;
+      });
+    }
+    importShared(code);
   }
 
   /* ---------- events ---------- */
+  const go = v => { ddOpen = false; view = v; render(); window.scrollTo({ top: 0 }); };
   document.getElementById("app").addEventListener("click", e => {
     const t = e.target.closest("[data-view],[data-act]"); if (!t) return;
-    if (t.dataset.view != null) { view = t.dataset.view === "home" ? "home" : +t.dataset.view; render(); window.scrollTo({ top: 0 }); return; }
+    if (t.dataset.view != null) return go(t.dataset.view === "home" || t.dataset.view === "settings" ? t.dataset.view : +t.dataset.view);
     const act = t.dataset.act;
-    if (act === "add-day") daySheet(true);
-    else if (act === "edit-day") view === "adhoc" ? adhocSheet() : daySheet(false);
+    if (act !== "toggle-saved" && ddOpen) { ddOpen = false; renderTopbar(); }
+    if (act === "toggle-saved") { ddOpen = !ddOpen; renderTopbar(); }
+    else if (act === "open-saved") openSaved(+t.dataset.i);
+    else if (act === "new-saved") newSavedSheet();
+    else if (act === "start") go(detailIdx);
+    else if (act === "back-detail") openSaved(view);
+    else if (act === "fav") toggleFav();
+    else if (act === "share") shareSaved();
+    else if (act === "remove-saved") removeSavedSheet();
+    else if (act === "edit-day") renameSheet();
     else if (act === "finish-adhoc") finishAdhoc();
+    else if (act === "save-adhoc") saveAsSheet(adhoc?.exercises || [], adhoc?.name === "Ad Hoc" ? "My workout" : adhoc?.name);
+    else if (act === "keep-adhoc") toggleKeep();
+    else if (act === "delete-adhoc") deleteAdhocSheet();
     else if (act === "cal-prev") { calMonth = shiftMonth(calMonth || thisMonth(), -1); render(); }
     else if (act === "cal-next") { calMonth = shiftMonth(calMonth || thisMonth(), 1); render(); }
     else if (act === "cal-day") calDaySheet(t.dataset.date);
@@ -1057,10 +1704,23 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
     else if (act === "edit-set") setSheet(+t.dataset.ex, +t.dataset.set);
     else if (act === "complete") toggleComplete(+t.dataset.ex);
     else if (act === "pick-day") pickDaySheet();
-    else if (act === "go-day") { view = +t.dataset.day; render(); window.scrollTo({ top: 0 }); }
+    else if (act === "go-day") go(+t.dataset.day);
     else if (act === "log") logSheet(t.dataset.type);
     else if (act === "view-log") viewLog(t.dataset.id);
-    else if (act === "backup") backupSheet();
+    else if (act === "export") exportData();
+    else if (act === "import") importSheet();
+    else if (act === "import-link") importLinkSheet();
+    else if (act === "restore-removed") restoreRemoved(+t.dataset.i);
+    else if (act === "check-update") checkForUpdate(true);
+    else if (act === "dismiss-tip") { settings.tipDismissed = true; persistSettings(); render(); }
+  });
+  // Close the Saved Workouts dropdown when tapping anywhere else.
+  document.addEventListener("click", e => { if (ddOpen && !e.target.closest(".dd")) { ddOpen = false; renderTopbar(); } });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && ddOpen) { ddOpen = false; renderTopbar(); } });
+  // Settings fields save as you type.
+  document.getElementById("app").addEventListener("input", e => {
+    const k = e.target.dataset?.setting; if (!k) return;
+    settings[k] = e.target.value.trim(); persistSettings();
   });
 
   /* ---------- drag to reorder exercises ---------- */
@@ -1070,7 +1730,7 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
     const [x] = a.splice(from, 1); a.splice(to, 0, x); commit();
   }
   document.addEventListener("pointerdown", e => {
-    const h = e.target.closest("[data-handle]"); if (!h || view === "home") return;
+    const h = e.target.closest("[data-handle]"); if (!h || !curDay()) return;
     e.preventDefault();
     const cards = [...document.querySelectorAll(".list .card")];
     const from = +h.dataset.handle, card = cards[from];
@@ -1122,11 +1782,57 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
     }
   });
 
+  /* ---------- iPhone keyboard: keep bottom sheets above it ---------- */
+  // iOS doesn't shrink the page when the keyboard opens, so lift the sheet by the keyboard's height
+  // and scroll the focused field into view.
+  if (window.visualViewport) {
+    const vv = window.visualViewport, sheet = $("#sheet");
+    const fit = () => {
+      const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      sheet.style.bottom = kb > 60 ? kb + "px" : "";
+      sheet.style.maxHeight = kb > 60 ? Math.round(vv.height * 0.94) + "px" : "";
+    };
+    vv.addEventListener("resize", fit); vv.addEventListener("scroll", fit);
+  }
+  document.addEventListener("focusin", e => {
+    if (e.target.matches?.("input:not([type=checkbox]):not([type=file]),textarea") && e.target.closest("#sheet"))
+      setTimeout(() => e.target.scrollIntoView({ block: "center", behavior: "smooth" }), 320);
+  });
+
+  /* ---------- updates: offer a refresh when a new version is ready ---------- */
+  let swReg = null, waitingSW = null;
+  function offerUpdate(worker) {
+    if (!worker || !navigator.serviceWorker.controller) return;
+    waitingSW = worker;
+    const bar = $("#updbar"); bar.hidden = false;
+  }
+  $("#upd-go").onclick = () => {
+    save();
+    if (waitingSW) waitingSW.postMessage("skip-waiting"); else location.reload();
+  };
+  $("#upd-x").onclick = () => { $("#updbar").hidden = true; };
+  async function checkForUpdate(manual) {
+    if (!swReg) return manual && toast("Updates aren't available in this browser.");
+    try { await swReg.update(); } catch {}
+    if (swReg.waiting) return offerUpdate(swReg.waiting);
+    if (manual) setTimeout(() => { if (!swReg.waiting && !swReg.installing) toast("You're on the latest version."); }, 1200);
+  }
+
   boot();
 
   // Offline support and "Install app": register the service worker (needs https or localhost).
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+    let reloading = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (reloading) return; reloading = true; location.reload(); });
+    window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").then(reg => {
+      swReg = reg;
+      if (reg.waiting) offerUpdate(reg.waiting);
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        nw?.addEventListener("statechange", () => { if (nw.state === "installed") offerUpdate(nw); });
+      });
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) reg.update().catch(() => {}); });
+    }).catch(() => {}));
   }
 })();
 </script>

@@ -1,6 +1,6 @@
 // Service worker: saves the app's files on the phone so it opens with no internet.
 // Bump CACHE whenever you change any file below, so phones pick up the new version.
-const CACHE = "workout-split-v3";
+const CACHE = "workout-split-v4";
 const FILES = [
   "./",
   "./index.html",
@@ -16,9 +16,13 @@ const FILES = [
   "./fonts/poppins-latin-800-normal.woff2"
 ];
 
+// A new version installs in the background and waits. The app shows "Update now", which sends
+// "skip-waiting" so the switch happens only when the user is ready (their data is saved first).
+// The very first install has nothing to replace, so it takes over straight away.
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES.map(f => new Request(f, { cache: "reload" })))));
 });
+self.addEventListener("message", event => { if (event.data === "skip-waiting") self.skipWaiting(); });
 
 self.addEventListener("activate", event => {
   event.waitUntil(

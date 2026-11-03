@@ -9,7 +9,8 @@ A personal workout tracker that installs on your phone like an app. It's plain H
 | `index.html` | The whole app: layout, styles and code. |
 | `manifest.json` | Tells Android the app's name, colors and icon, so Chrome offers **Install app**. |
 | `sw.js` | The service worker. It saves the app's files on the phone so the app opens with no internet. |
-| `icons/` | Home-screen icons. |
+| `icons/` | Home-screen icons, plus `og-image.png`, the preview card shown when a shared link is pasted in a message. |
+| `CLAUDE.md` | Rules for changing the app, including the permanent data-safety rule. Read it before touching storage. |
 | `fonts/` | The Poppins font, stored here so it works offline. |
 
 ## Hosting (GitHub Pages)
@@ -18,18 +19,23 @@ The site is served by GitHub Pages from the `main` branch, root folder: **Settin
 
 The address is `https://shinpeikuo.github.io/workout-split/`.
 
-## Install on Android
+## Install
 
-1. Open the address above in **Chrome** on your phone.
-2. Tap the **⋮** menu, then **Install app** (or **Add to Home screen**).
-3. Open it from your home screen. After the first load it works with no internet.
+**Android:** open the address above in **Chrome**, tap **⋮**, then **Install app** (or **Add to Home screen**).
+
+**iPhone:** open the address in **Safari**, tap **Share**, then **Add to Home Screen**. Data in the Safari tab and in the Home Screen app are kept separately on iPhone, so pick one (the Home Screen app is safer) and use Settings → Export / Import to move data between them.
+
+After the first load the app works with no internet.
 
 ## Updating the app
 
-1. Edit `index.html` and push to `main`. Pages republishes in about a minute.
-2. In `sw.js`, change `CACHE` to a new name (for example `workout-split-v2`). This makes phones that already have the app fetch the new files.
-3. Close and reopen the app on your phone, maybe twice, to get the new version.
+1. Follow `CLAUDE.md`. Any change to stored data needs a data-version bump and a tested migration.
+2. Edit `index.html` and push to `main`. Pages republishes in about a minute.
+3. In `sw.js`, change `CACHE` to a new name (for example `workout-split-v5`). This makes phones that already have the app fetch the new files.
+4. Phones show an **Update now** banner when the new version is ready. Settings → **Check for updates** checks right away.
 
 ## Keeping your data safe
 
-Your workouts are saved in the browser's local storage on the phone. Uninstalling the app or clearing Chrome's site data erases them. Every so often, go to the Home screen and tap **Back up or restore data**, then **Copy backup**, and paste the text somewhere safe. To move to a new phone, install the app there and use **Restore from pasted backup**.
+Your workouts are saved in the browser's local storage on the phone, and every change is saved immediately. Uninstalling the app or clearing site data erases them.
+
+Every so often, open **Settings → Export my data** and save the backup file to Files, iCloud, Google Drive or email. To move to a new phone, install the app there and use **Settings → Import backup**. Import accepts backups from every version of the app (including old pasted-text backups), and asks whether to merge or replace.
