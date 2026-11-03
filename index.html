@@ -266,9 +266,10 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
 .dd-empty{padding:12px;color:var(--muted);font-size:14px}
 
 /* saved workout detail */
-.actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.act{min-height:44px;border-radius:12px;background:var(--card);font-weight:600;font-size:14px;color:var(--fg);padding:6px 4px}
-.act.on{color:var(--sauna)}
+.actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:2px 0 14px}
+.act{min-height:40px;border-radius:12px;background:var(--card);font-weight:600;font-size:14px;color:var(--fg);padding:4px;display:grid;place-items:center}
+.act.fav svg{width:22px;height:22px;color:var(--muted)}
+.act.fav.on svg{color:#ff3b4a}
 .act.danger{color:var(--danger)}
 .btn.start{padding:16px;font-size:17px}
 .btn.kept{background:var(--ok-bg);color:var(--ok)}
@@ -837,6 +838,8 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
   //  "detail"  saved workout: view and edit it, favorite/share/rename/remove, Start Workout at the bottom
   //  "session" saved workout in progress: Complete each exercise
   //  "adhoc"   ad hoc workout (building or doing it): Complete, Save?, Keep active, Delete
+  const HEART_FULL = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.8 4.5c2.1 0 3.6 1.1 4.6 2.6.2.3.6.3.8 0 1-1.5 2.5-2.6 4.6-2.6 3.8 0 5.9 3.8 4.4 7.2C19.5 16.4 12 21 12 21z"/></svg>';
+  const HEART_LINE = HEART_FULL.replace('fill="currentColor"', 'fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"');
   function renderDay(d, kind) {
     if (!d) return "";
     const doing = kind !== "detail";
@@ -853,7 +856,7 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
       <div class="sub"><span>${kind === "detail" ? `Saved workout${fav ? " · ♥ Favorite" : ""}` : "Reps@lbs · BW = bodyweight"}</span><span class="sync">${esc(syncMsg)}</span></div>`;
     const actions = kind === "detail" ? `
       <div class="actions">
-        <button class="act ${fav ? "on" : ""}" data-act="fav" aria-pressed="${fav}">${fav ? "♥ Favorite" : "♡ Favorite"}</button>
+        <button class="act fav ${fav ? "on" : ""}" data-act="fav" aria-pressed="${fav}" aria-label="${fav ? "Favorite (tap to remove)" : "Add to Favorites"}">${fav ? HEART_FULL : HEART_LINE}</button>
         <button class="act" data-act="share">Share</button>
         <button class="act" data-act="edit-day">Rename</button>
         <button class="act danger" data-act="remove-saved">Remove</button>
