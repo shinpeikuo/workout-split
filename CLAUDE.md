@@ -9,6 +9,10 @@ Workout Split is an offline PWA (plain HTML/CSS/JS, no build step, no backend, n
 3. **Stored data carries a data version number.** When the structure changes, write a migration that upgrades old data without losing anything, and test it against old-format data before shipping. Migrations must be additive and safe to run more than once, and must not destroy the original data until the upgraded copy has been written successfully.
 4. **Before any change that touches storage, explain the impact on existing user data and wait for the owner's approval.**
 
+## Owner-approved exception: ad hoc drafts expire
+
+An in-progress ad hoc workout from an earlier day is discarded when the app starts, to avoid stale drafts. This is intentional, not a bug. The only exceptions are drafts the user marked **Keep active**, which stay until the user finishes or deletes them. Completed exercises are already in History and are never affected. Do not change this expiry without the owner's approval.
+
 ## Practical checklist for any storage change
 
 - List every localStorage key read or written, and what happens to data already on phones.
