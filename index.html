@@ -885,8 +885,13 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
 
   /* ---------- sheets ---------- */
   let sheetOpen = false;
+  // Lower the phone keyboard. iOS can carry an open keyboard over to the next screen's text field,
+  // so every sheet change starts with it closed; a field only gets the keyboard when tapped
+  // (or when a sheet deliberately focuses it, like naming a new workout).
+  const hideKeyboard = () => { const a = document.activeElement; if (a && a !== document.body && a.matches?.("input,textarea,select,[contenteditable]")) a.blur(); };
   function openSheet(html, bind) {
     const sheet = $("#sheet"), scrim = $("#scrim");
+    hideKeyboard();
     $("#sheetInner").innerHTML = `<div class="grab"></div>` + html;
     if (!sheetOpen) { try { history.pushState({ sheet: 1 }, ""); } catch {} }
     sheet.hidden = false; scrim.hidden = false; sheetOpen = true; sheet.scrollTop = 0;
@@ -900,6 +905,7 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
   window.addEventListener("popstate", () => { if (sheetOpen) reallyClose(); });
   function reallyClose() {
     const sheet = $("#sheet"), scrim = $("#scrim");
+    hideKeyboard();
     sheet.classList.remove("on"); scrim.classList.remove("on"); sheetOpen = false;
     setTimeout(() => { if (!sheetOpen) { sheet.hidden = true; scrim.hidden = true; } }, 230);
     render();
@@ -1058,6 +1064,7 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
       };
       $("#b-cancel", root).onclick = closeSheet;
       showList();
+      setTimeout(() => { if (document.activeElement === input) input.blur(); }, 0);   // keyboard only when the field is tapped
     });
   }
 
