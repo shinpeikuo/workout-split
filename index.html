@@ -711,7 +711,7 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
     return `
       ${installTip()}
       <header class="head"><h1>Training <span>Log</span></h1><div class="total">${fmtDate(todayStr())}</div></header>
-      <div class="sub"><span>Workouts, cardio, sauna and more</span><span class="sync">${esc(syncMsg)}</span></div>
+      <div class="sub"><span>Workouts, cardio, sauna and more</span></div>
       <div class="section-label">Log</div>
       <div class="tiles">
         <button class="tile t-workout" data-act="pick-day"><span class="ic">${ICONS.workout}</span><b>Workout</b><small>Saved or ad hoc</small></button>
@@ -844,7 +844,7 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
         <h1><button data-act="edit-day" aria-label="${kind === "adhoc" ? "Rename ad hoc workout" : "Rename workout"}">${esc(d.name)}${tag ? ` <span>${tag}</span>` : ""}</button></h1>
         <div class="total">${totalSets(d)} sets</div>
       </header>
-      <div class="sub"><span>${kind === "detail" ? `Saved workout${fav ? " · ♥ Favorite" : ""}` : "Reps@lbs · BW = bodyweight"}</span><span class="sync">${esc(syncMsg)}</span></div>`;
+      <div class="sub"><span>${kind === "detail" ? `Saved workout${fav ? " · ♥ Favorite" : ""}` : "Reps@lbs · BW = bodyweight"}</span></div>`;
     const actions = kind === "detail" ? `
       <div class="actions">
         <button class="act fav ${fav ? "on" : ""}" data-act="fav" aria-pressed="${fav}" aria-label="${fav ? "Favorite (tap to remove)" : "Add to Favorites"}">${fav ? HEART_FULL : HEART_LINE}</button>
