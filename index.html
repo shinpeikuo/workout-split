@@ -281,6 +281,8 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
 .panel{background:var(--card);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px}
 .panel.inset{background:var(--chip)}
 .pnote{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+.steps{margin:0;padding-left:22px;font-size:15px;line-height:1.5;display:flex;flex-direction:column;gap:6px}
+.steps b{color:var(--accent);font-weight:600}
 .pnote b{color:var(--fg)}
 .kv{display:flex;justify-content:space-between;gap:12px;font-size:15px}
 .kv span{color:var(--muted)}
@@ -678,6 +680,7 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
             </button>`; }).join("") : `<div class="dd-empty">No saved workouts yet.</div>`}
           <div class="dd-sep"></div>
           <button class="dd-item new" data-act="new-saved">+ New workout</button>
+          <button class="dd-item new" data-act="import-link">+ Add a shared workout</button>
         </div>
       </div>
       <button class="tb icon" data-view="settings" aria-current="${view === "settings"}" aria-label="Settings">${GEAR}</button>`;
@@ -1666,16 +1669,27 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
   }
   const linkCode = text => (String(text).match(/#w=([zj][A-Za-z0-9_-]+)/) || [])[1] || null;
   function importLinkSheet() {
+    const canPaste = !!navigator.clipboard?.readText;
     openSheet(`
-      <h2>Import a <em>shared workout</em></h2>
-      <p class="pnote">Paste the link someone shared with you.</p>
-      <div class="field"><label for="f-link">Shared link</label><textarea id="f-link" rows="3" spellcheck="false" class="mono"></textarea></div>
+      <h2>Add a <em>shared workout</em></h2>
+      <p class="pnote">${canPaste ? "Copy the link someone shared with you, then tap Paste link. If your phone asks, tap Paste." : "Paste the link someone shared with you."}</p>
+      ${canPaste ? `<button class="btn primary" id="b-paste">Paste link</button>` : ""}
+      <div class="field"><label for="f-link">${canPaste ? "Or paste it here yourself" : "Shared link"}</label><textarea id="f-link" rows="3" spellcheck="false" class="mono"></textarea></div>
       <div class="err" id="err"></div>
-      <div class="btns"><button class="btn primary" id="b-go">Import workout</button><button class="btn ghost" id="b-cancel">Cancel</button></div>`, root => {
-      $("#b-go", root).onclick = () => {
-        const code = linkCode($("#f-link", root).value);
-        if (!code) return $("#err", root).textContent = "That doesn't look like a Workout Split link. Paste the whole link.";
+      <div class="btns"><button class="btn ${canPaste ? "" : "primary"}" id="b-go">Import workout</button><button class="btn ghost" id="b-cancel">Cancel</button></div>`, root => {
+      const go = text => {
+        const code = linkCode(text);
+        if (!code) return $("#err", root).textContent = "That doesn't look like a Workout Split link. Copy the whole link and try again.";
         closeSheet(); setTimeout(() => importShared(code), 250);
+      };
+      $("#b-go", root).onclick = () => go($("#f-link", root).value);
+      if (canPaste) $("#b-paste", root).onclick = async () => {
+        let text = "";
+        try { text = await navigator.clipboard.readText(); }
+        catch { return $("#err", root).textContent = "Couldn't read the copied link. Press and hold in the box below and tap Paste."; }
+        $("#f-link", root).value = text;
+        if (!text.trim()) return $("#err", root).textContent = "Nothing is copied yet. Copy the shared link first.";
+        go(text);
       };
       $("#b-cancel", root).onclick = closeSheet;
     });
@@ -1691,14 +1705,19 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
       const link = `${location.origin}${location.pathname}#w=${code}`;
       return openSheet(`
         <h2>Someone shared a <em>workout</em></h2>
-        <p class="pnote">If you use Workout Split from your Home Screen, its data is separate from Safari. Copy the link, open the app from your Home Screen, then go to Settings → Import a shared workout link.</p>
+        <p class="pnote">iPhone opens links in Safari, which can't save into your Home Screen app. To add it there:</p>
+        <ol class="steps">
+          <li>Tap <b>Copy link</b> below.</li>
+          <li>Open Workout Split from your Home Screen.</li>
+          <li>Tap <b>Saved Workouts</b> → <b>Add a shared workout</b> → <b>Paste link</b>.</li>
+        </ol>
         <div class="btns">
-          <button class="btn primary" id="b-copy">Copy link for my Home Screen app</button>
-          <button class="btn" id="b-here">Import here in Safari</button>
+          <button class="btn primary" id="b-copy">Copy link</button>
+          <button class="btn" id="b-here">Save in Safari instead</button>
           <button class="btn ghost" id="b-cancel">Cancel</button>
         </div>`, root => {
         $("#b-copy", root).onclick = async () => {
-          try { await navigator.clipboard.writeText(link); closeSheet(); toast("Link copied. Open the app from your Home Screen."); }
+          try { await navigator.clipboard.writeText(link); closeSheet(); toast("Link copied. Now open Workout Split from your Home Screen."); }
           catch { closeSheet(); setTimeout(() => copyTextSheet("Shared workout link", link), 250); }
         };
         $("#b-here", root).onclick = () => { closeSheet(); setTimeout(() => importShared(code), 250); };
