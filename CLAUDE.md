@@ -13,6 +13,10 @@ Workout Split is an offline PWA (plain HTML/CSS/JS, no build step, no backend, n
 
 An in-progress ad hoc workout from an earlier day is discarded when the app starts, to avoid stale drafts. This is intentional, not a bug. The only exceptions are drafts the user marked **Keep active**, which stay until the user finishes or deletes them. Completed exercises are already in History and are never affected. Do not change this expiry without the owner's approval.
 
+## Owner-approved: started saved workouts run on a daily copy
+
+Tapping Start Workout makes a working copy for today (`workout-split-session-v1`, keyed by saved workout id). Adding, removing or reordering exercises changes only that copy; rep, weight and set-count changes on exercises that came from the saved workout also update the saved workout. Copies from an earlier day are discarded when the app starts. Completed exercises are already in History and are never affected. The copy is not part of Export backups. Do not change this without the owner's approval.
+
 ## Practical checklist for any storage change
 
 - List every localStorage key read or written, and what happens to data already on phones.
