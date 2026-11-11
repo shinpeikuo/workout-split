@@ -17,6 +17,10 @@ An in-progress ad hoc workout from an earlier day is discarded when the app star
 
 Tapping Start Workout makes a working copy for today (`workout-split-session-v1`, keyed by saved workout id). Adding, removing or reordering exercises changes only that copy; rep, weight and set-count changes on exercises that came from the saved workout also update the saved workout. Copies from an earlier day are discarded when the app starts. Completed exercises are already in History and are never affected. The copy is not part of Export backups. Do not change this without the owner's approval.
 
+## Owner-approved: Finish Workout records what wasn't completed
+
+Finish Workout (saved workouts) and Finish ad hoc workout both add the uncompleted exercises to that day's History entry as `notDone: [{exId, name, sets}]`, plus `finishedTs`. Both fields are optional, so older entries without them stay valid and no migration is needed. Finishing with nothing completed logs nothing. Finishing a saved workout clears its daily working copy. "Repeat this workout" and "Save?" use only completed exercises.
+
 ## Practical checklist for any storage change
 
 - List every localStorage key read or written, and what happens to data already on phones.

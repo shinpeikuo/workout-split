@@ -180,6 +180,8 @@ body.drag-lock{user-select:none;-webkit-user-select:none}
 .detail .ex{background:var(--chip);border-radius:12px;padding:10px 12px}
 .detail .ex b{display:block;color:var(--accent);font-size:15px}
 .detail .ex span{color:var(--muted);font-variant-numeric:tabular-nums}
+.detail-lbl{margin:4px 0 -2px;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.detail.notdone .ex b{color:var(--muted)}
 
 /* exercise picker */
 .exlist{background:var(--chip);border-radius:12px;max-height:290px;overflow:auto;margin-top:-6px}
@@ -668,8 +670,9 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
       dayId: day.id, dayNum: null, dayName: day.name, total: day.exercises.length, done: []
     };
     const i = log.done.findIndex(d => d.exId === ex.id);
-    if (i >= 0) log.done.splice(i, 1);
-    else log.done.push({ exId: ex.id, name: ex.name, sets: JSON.parse(JSON.stringify(ex.sets)) });
+    const entry = { exId: ex.id, name: ex.name, sets: JSON.parse(JSON.stringify(ex.sets)) };
+    if (i >= 0) { log.done.splice(i, 1); if (log.finishedTs) (log.notDone = log.notDone || []).push(entry); }
+    else { log.done.push(entry); if (log.notDone) log.notDone = log.notDone.filter(d => d.exId !== ex.id); }
     log.total = day.exercises.length; log.updatedTs = Date.now();
     if (isAdhoc || !log.dayNum) log.dayName = day.name;   // keep version-1 logs' original Day label
     if (!log.done.length) removeLog(log.id); else putLog(log);
@@ -899,7 +902,8 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
     const foot = kind === "detail"
       ? `<button class="btn primary start" data-act="start">Start Workout</button>`
       : kind === "session"
-      ? `<button class="btn" data-act="back-detail">Back to workout details</button>
+      ? `<button class="btn primary" data-act="finish-session">Finish Workout</button>
+         <button class="btn" data-act="back-detail">Back to workout details</button>
          <p class="foot">Exercises you add, remove or reorder here are for today only. Rep and weight changes also update the saved workout.</p>
          <p class="foot">Add weight or reps once all sets feel strong</p>`
       : `<button class="btn primary" data-act="finish-adhoc">Finish ad hoc workout</button>
@@ -1350,6 +1354,39 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
     };
     keepId = null; persistAdhoc(); view = "adhoc";
   }
+  // Finish a workout in progress (saved or ad hoc). Completed exercises are already in History; the rest
+  // are added to the same log as "Not completed", with the sets they were set to. Nothing completed: nothing is logged.
+  function finishSheet() {
+    const day = curDay(); if (!day) return;
+    const isAdhoc = day === adhoc, log = sessionFor(day);
+    const doneIds = new Set((log?.done || []).map(d => d.exId));
+    const left = day.exercises.filter(e => !doneIds.has(e.id)), n = day.exercises.length - left.length;
+    const msg = !n
+      ? "You haven't completed any exercises, so nothing will be logged."
+      : left.length
+      ? `You completed ${n} of ${day.exercises.length}. The other ${left.length === 1 ? "one" : left.length} will be saved in History as not completed.`
+      : `You completed all ${n} exercises.`;
+    openSheet(`
+      <h2>Finish <em>${esc(day.name)}</em>?</h2>
+      <p class="pnote">${msg}</p>
+      <div class="btns">
+        <button class="btn primary" id="b-yes">Finish workout</button>
+        <button class="btn ghost" id="b-cancel">Keep going</button>
+      </div>`, root => {
+      $("#b-yes", root).onclick = () => {
+        if (log && n) putLog({ ...log, total: day.exercises.length, finishedTs: Date.now(), updatedTs: Date.now(),
+          notDone: [...(log.notDone || []).filter(d => !day.exercises.some(e => e.id === d.exId)),
+                    ...left.map(e => ({ exId: e.id, name: e.name, sets: JSON.parse(JSON.stringify(e.sets)) }))] });
+        closeSheet();
+        setTimeout(() => {
+          if (isAdhoc) finishAdhoc();
+          else { delete sessions[day.id]; persistSessions(); view = "home"; render(); window.scrollTo({ top: 0 }); }
+          toast(n ? "Workout finished" : "Workout ended");
+        }, 0);
+      };
+      $("#b-cancel", root).onclick = closeSheet;
+    });
+  }
   function finishAdhoc() { adhoc = null; keepId = null; persistAdhoc(); view = "home"; render(); window.scrollTo({ top: 0 }); }
   function toggleKeep() {
     if (!adhoc) return;
@@ -1424,6 +1461,8 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
       <h2>${esc(workoutName(l))}${l.adhoc ? " <em>Ad Hoc</em>" : ""}</h2>
       <div class="meta" style="color:var(--muted);font-size:14px">${fmtDate(l.date)} · ${l.done.length}/${l.total} exercises completed</div>
       <div class="detail">${l.done.map(e => `<div class="ex"><b>${esc(e.name)}</b><span>${e.sets.map(fmtSet).map(esc).join(" · ")}</span></div>`).join("")}</div>
+      ${l.notDone?.length ? `<div class="detail-lbl">Not completed</div>
+      <div class="detail notdone">${l.notDone.map(e => `<div class="ex"><b>${esc(e.name)}</b><span>${(e.sets || []).map(fmtSet).map(esc).join(" · ")}</span></div>`).join("")}</div>` : ""}
       <div class="btns">
         ${di >= 0 && l.date === todayStr() ? `<button class="btn primary" id="b-open">Continue workout</button>` : ""}
         ${canResume ? `<button class="btn primary" id="b-open">Continue ad hoc workout</button>` : ""}
@@ -1772,7 +1811,7 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
     else if (act === "share") shareSaved();
     else if (act === "remove-saved") removeSavedSheet();
     else if (act === "edit-day") renameSheet();
-    else if (act === "finish-adhoc") finishAdhoc();
+    else if (act === "finish-adhoc" || act === "finish-session") finishSheet();
     else if (act === "save-adhoc") saveAsSheet(adhoc?.exercises || [], adhoc?.name === "Ad Hoc" ? "My workout" : adhoc?.name);
     else if (act === "keep-adhoc") toggleKeep();
     else if (act === "delete-adhoc") deleteAdhocSheet();
