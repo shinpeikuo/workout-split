@@ -757,6 +757,8 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
         <div><b>${cnt("sauna")}</b><small>Sauna</small></div>
         <div><b>${cnt("misc")}</b><small>Misc</small></div>
       </div>
+      <div class="section-label">Calendar</div>
+      ${renderCalendar()}
       <div class="section-label">Recent</div>
       <div class="feed">
         ${recent.length ? recent.map(l => `
@@ -766,8 +768,6 @@ button:not(:disabled):active,.filebtn:active{opacity:.75}
             <time>${l.date === todayStr() ? "Today" : fmtDate(l.date)}</time>
           </button>`).join("") : `<div class="emptyfeed">Nothing logged yet. Your entries will list here.</div>`}
       </div>
-      <div class="section-label">Calendar</div>
-      ${renderCalendar()}
       <button class="addex" data-view="settings">Settings, backup &amp; restore</button>
       <p class="foot">Your data lives only on this phone. Export a backup now and then.</p>`;
   }
